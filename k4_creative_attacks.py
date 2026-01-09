@@ -1,254 +1,306 @@
 #!/usr/bin/env python3
 """
-K4 Creative Attacks
+K4 Creative Attack Suite
 
-Try unconventional approaches:
-1. Interrupted key cipher (skip certain positions)
-2. Letter-dependent key selection
-3. Position-dependent alphabet shifts
-4. Bifid/trifid hybrid approaches
-5. Check if BERLINCLOCK hint might be misleading
+Unconventional approaches to crack K4:
+1. Berlin Clock mechanism as key generator
+2. Playfair cipher variants
+3. Bifid/Trifid ciphers
+4. Progressive/shifted keys
+5. Coordinate-based keys from K2
+6. Morse code analysis
+7. Null cipher detection
+8. Gromark cipher
 """
 
 import itertools
 from collections import Counter
-import string
+import math
 
 K4 = "OBKRUOXOGHULBSOLIFBBWFLRVQQPRNGKSSOTWTQSJQSSEKZZWATJKLUDIAWINFBNYPVTTMZFPKWGDKZXTJCDIGKUHUAUEKCAR"
 KRYPTOS_ALPHA = "KRYPTOSABCDEFGHIJLMNQUVWXZ"
 STANDARD_ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-def decrypt_char(ct, key, alpha):
-    return alpha[(alpha.index(ct) - alpha.index(key)) % len(alpha)]
-
-def derive_key(ct, pt, alpha):
-    return alpha[(alpha.index(ct) - alpha.index(pt)) % len(alpha)]
+def vigenere_decrypt(ct, key, alpha=KRYPTOS_ALPHA):
+    result = []
+    for i, c in enumerate(ct):
+        k = key[i % len(key)]
+        result.append(alpha[(alpha.index(c) - alpha.index(k)) % len(alpha)])
+    return ''.join(result)
 
 print("="*70)
-print("K4 CREATIVE ATTACKS")
+print("K4 CREATIVE ATTACK SUITE")
 print("="*70)
 
-# APPROACH 1: Interrupted Key
+# ============================================================
+# ATTACK 1: Berlin Clock Mechanism
+# ============================================================
 print("\n" + "="*70)
-print("INTERRUPTED KEY CIPHER")
+print("ATTACK 1: BERLIN CLOCK PATTERNS")
 print("="*70)
-print("Theory: Some positions might use a different key or be skipped")
 
-# What if the key is applied with interruptions?
-# E.g., every Nth position uses a different rule
+# Berlin Clock displays time in specific way
+# What if the key follows this pattern?
 
-base_keys = ['KRYPTOS', 'PALIMPSEST', 'ABSCISSA', 'KOMITET']
+# Try CLOCK-related words as keys
+clock_keys = [
+    'CLOCK', 'BERLIN', 'BERLINCLOCK', 'CLOCKBERLIN',
+    'MENGENLEHREUHR',  # German name for Berlin Clock
+    'SETTHECLOCKUHR',
+    'TIME', 'ZEIT',  # German for time
+    'CLOCKWORK',
+]
 
-for base_key in base_keys:
-    for interrupt_every in [2, 3, 4, 5, 7]:
-        for interrupt_shift in [1, 2, 13, -1]:
-            pt = ''
-            key_idx = 0
-            for i, c in enumerate(K4):
-                if i % interrupt_every == 0:
-                    # Interrupted position - apply different shift
-                    key_char = base_key[key_idx % len(base_key)]
-                    key_val = (KRYPTOS_ALPHA.index(key_char) + interrupt_shift) % 26
-                    pt += KRYPTOS_ALPHA[(KRYPTOS_ALPHA.index(c) - key_val) % 26]
-                else:
-                    # Normal position
-                    key_char = base_key[key_idx % len(base_key)]
-                    pt += decrypt_char(c, key_char, KRYPTOS_ALPHA)
-                key_idx += 1
+print("Testing clock-themed keys...")
+for key in clock_keys:
+    pt = vigenere_decrypt(K4, key)
+    words = [w for w in ['BERLIN', 'CLOCK', 'NORTH', 'EAST', 'THE', 'SLOWLY'] if w in pt]
+    if words:
+        print(f"Key '{key}': Found {words}")
+        print(f"  PT: {pt[:60]}...")
 
-            if 'BERLIN' in pt or 'NORTHEAST' in pt or 'CLOCK' in pt:
-                print(f"Key={base_key}, interrupt_every={interrupt_every}, shift={interrupt_shift}")
-                print(f"  {pt}")
-
-# APPROACH 2: Letter-Dependent Key
+# ============================================================
+# ATTACK 2: Playfair Cipher
+# ============================================================
 print("\n" + "="*70)
-print("LETTER-DEPENDENT KEY")
-print("="*70)
-print("Theory: Key character depends on plaintext or ciphertext letter")
-
-# What if key[i] depends on ct[i-1] or some previous character?
-for alpha in [KRYPTOS_ALPHA]:
-    for lag in [1, 2, 3]:
-        for base_key in ['KRYPTOS', 'PALIMPSEST']:
-            pt = []
-            for i, c in enumerate(K4):
-                if i < lag:
-                    # Use base key for first few characters
-                    key_char = base_key[i % len(base_key)]
-                else:
-                    # Key depends on previous ciphertext
-                    prev_ct = K4[i - lag]
-                    key_val = (alpha.index(base_key[i % len(base_key)]) + alpha.index(prev_ct)) % len(alpha)
-                    key_char = alpha[key_val]
-
-                pt.append(decrypt_char(c, key_char, alpha))
-
-            plaintext = ''.join(pt)
-            if 'BERLIN' in plaintext or 'NORTHEAST' in plaintext:
-                print(f"Lag={lag}, base_key={base_key}: {plaintext[:50]}...")
-
-# APPROACH 3: Polybius Square / Bifid Variant
-print("\n" + "="*70)
-print("POLYBIUS / BIFID VARIANT")
+print("ATTACK 2: PLAYFAIR CIPHER")
 print("="*70)
 
-# Create KRYPTOS Polybius square (5x5, combining I/J)
-def create_polybius(keyword):
-    """Create a Polybius square from keyword."""
-    # KRYPTOS has 26 letters (including separate I and J? Or 25?)
-    # Standard is 25 letters (I=J)
-    alpha = ""
-    for c in keyword:
-        if c not in alpha:
-            alpha += c
-    for c in "ABCDEFGHIKLMNOPQRSTUVWXYZ":  # No J
-        if c not in alpha:
-            alpha += c
-    return alpha
+def create_playfair_grid(keyword):
+    keyword = keyword.upper().replace('J', 'I')
+    seen = set()
+    grid = []
+    for c in keyword + "ABCDEFGHIKLMNOPQRSTUVWXYZ":
+        if c not in seen and c.isalpha():
+            seen.add(c)
+            grid.append(c)
+    return [grid[i:i+5] for i in range(0, 25, 5)]
 
-def polybius_coords(char, square):
-    """Get row,col coordinates in Polybius square."""
-    if char == 'J':
-        char = 'I'
-    idx = square.index(char)
-    return idx // 5, idx % 5
+def playfair_decrypt(ct, grid):
+    pos = {}
+    for r, row in enumerate(grid):
+        for c, char in enumerate(row):
+            pos[char] = (r, c)
 
-def coords_to_char(row, col, square):
-    """Convert coordinates back to character."""
-    return square[row * 5 + col]
+    ct = ct.replace('J', 'I')
+    if len(ct) % 2:
+        ct += 'X'
 
-# Try Bifid cipher
-square = create_polybius("KRYPTOS")
-print(f"Polybius square: {square}")
+    pt = []
+    for i in range(0, len(ct), 2):
+        a, b = ct[i], ct[i+1]
+        if a not in pos or b not in pos:
+            pt.extend([a, b])
+            continue
+        ra, ca = pos[a]
+        rb, cb = pos[b]
 
-# Bifid decryption attempt
-def bifid_decrypt(ciphertext, square, period=None):
-    """Decrypt using Bifid cipher."""
-    # Get coordinates
-    coords = []
-    for c in ciphertext:
-        if c == 'J':
-            c = 'I'
-        if c in square:
-            r, c_coord = polybius_coords(c, square)
-            coords.append((r, c_coord))
-
-    if not coords:
-        return ""
-
-    if period is None:
-        period = len(coords)
-
-    # Process in period-sized blocks
-    plaintext = ''
-    for start in range(0, len(coords), period):
-        block = coords[start:start + period]
-
-        # Split rows and columns
-        rows = [r for r, c in block]
-        cols = [c for r, c in block]
-
-        # Recombine (this is the bifid transformation)
-        combined = rows + cols
-        for i in range(0, len(combined), 2):
-            if i + 1 < len(combined):
-                r, c = combined[i], combined[i + 1]
-                r, c = r % 5, c % 5
-                plaintext += coords_to_char(r, c, square)
-
-    return plaintext
-
-for period in [5, 7, 11, 97]:
-    pt = bifid_decrypt(K4, square, period)
-    if pt and ('BERLIN' in pt or 'NORTHEAST' in pt or 'CLOCK' in pt):
-        print(f"Bifid period={period}: {pt}")
-    elif pt:
-        print(f"Bifid period={period}: {pt[:40]}...")
-
-# APPROACH 4: Re-examine the BERLINCLOCK hint
-print("\n" + "="*70)
-print("RE-EXAMINING BERLINCLOCK HINT")
-print("="*70)
-print("Theory: What if positions are 0-indexed instead of 1-indexed?")
-
-# Sanborn said characters 64-69 = NYPVTT = BERLIN
-# What if he meant 0-indexed? Then it's positions 64-69 (0-indexed)
-for offset in range(-3, 4):
-    bc_start = 63 + offset  # Try nearby positions
-    if 0 <= bc_start <= len(K4) - 11:
-        segment = K4[bc_start:bc_start+11]
-        print(f"Position {bc_start}: {segment}")
-
-        # Derive key for this position
-        target = "BERLINCLOCK"
-        key_chars = []
-        for ct, pt in zip(segment, target):
-            key_chars.append(derive_key(ct, pt, KRYPTOS_ALPHA))
-        print(f"  Key would be: {''.join(key_chars)}")
-
-# APPROACH 5: What if K4 uses K1/K2/K3 plaintexts somehow?
-print("\n" + "="*70)
-print("USING PREVIOUS SOLUTIONS AS KEY")
-print("="*70)
-
-K1_PT = "BETWEENSUBTLESHADINGANDTHEABSENCEOFLIGHTLIESTHENUANCEOFIQLUSION"
-K2_PT = "ITWASTOTALLYINVISIBLEHOWSTHATPOSSIBLETHEYUSEDTHEEARTHSMAGNETICFIELDXTHEINFORMATIONWASGATHEREDANDTRANSMITTEDUNDERGRUUNDTOANUNKNOWNLOCATIONX"
-
-# Try K1 plaintext as running key
-print("\nUsing K1 plaintext as key...")
-for offset in range(-20, 20):
-    pt = ''
-    for i, c in enumerate(K4):
-        key_idx = i + offset
-        if 0 <= key_idx < len(K1_PT):
-            key_char = K1_PT[key_idx]
-            if key_char in KRYPTOS_ALPHA:
-                pt += decrypt_char(c, key_char, KRYPTOS_ALPHA)
-            else:
-                pt += '?'
+        if ra == rb:
+            pt.append(grid[ra][(ca - 1) % 5])
+            pt.append(grid[rb][(cb - 1) % 5])
+        elif ca == cb:
+            pt.append(grid[(ra - 1) % 5][ca])
+            pt.append(grid[(rb - 1) % 5][cb])
         else:
-            pt += '?'
+            pt.append(grid[ra][cb])
+            pt.append(grid[rb][ca])
 
-    if 'BERLIN' in pt or 'NORTHEAST' in pt:
-        print(f"K1 offset {offset}: {pt}")
+    return ''.join(pt)
 
-# APPROACH 6: Simple substitution check
+playfair_keywords = ['KRYPTOS', 'PALIMPSEST', 'ABSCISSA', 'BERLIN', 'CLOCK',
+                     'BERLINCLOCK', 'SANBORN', 'CIA', 'LANGLEY', 'SHADOW']
+
+print("Testing Playfair cipher...")
+for kw in playfair_keywords:
+    grid = create_playfair_grid(kw)
+    pt = playfair_decrypt(K4, grid)
+    
+    if 'BERLIN' in pt or 'CLOCK' in pt or 'NORTH' in pt or 'EAST' in pt:
+        print(f"Keyword: {kw} - Found crib!")
+        print(f"  Plaintext: {pt}")
+
+# ============================================================
+# ATTACK 3: Progressive Key Shift
+# ============================================================
 print("\n" + "="*70)
-print("SIMPLE SUBSTITUTION CHECK")
-print("="*70)
-print("Theory: What if part of K4 is simple substitution?")
-
-# Frequency analysis
-freq = Counter(K4)
-print("\nK4 frequencies:")
-for c, count in freq.most_common():
-    print(f"  {c}: {count}")
-
-# In English: E T A O I N S H R
-# K4: K(8) U(6) S(6) T(6) O(5) B(5) W(5)
-
-# Try simple substitution where K=E, etc.
-simple_sub = {
-    'K': 'E', 'U': 'T', 'S': 'A', 'T': 'O', 'O': 'I',
-    'B': 'N', 'W': 'S', 'R': 'H', 'G': 'R', 'L': 'D'
-}
-
-sub_pt = ''
-for c in K4:
-    sub_pt += simple_sub.get(c, c.lower())
-print(f"\nSimple frequency sub: {sub_pt}")
-
-# APPROACH 7: Check if K4 contains an anagram
-print("\n" + "="*70)
-print("ANAGRAM CHECK")
+print("ATTACK 3: PROGRESSIVE KEY SHIFT")
 print("="*70)
 
-k4_letters = Counter(K4)
-print(f"K4 letter counts: {dict(k4_letters)}")
-print(f"Total letters: {sum(k4_letters.values())}")
+def progressive_decrypt(ct, base_key, shift_func, alpha=KRYPTOS_ALPHA):
+    result = []
+    for i, c in enumerate(ct):
+        key_idx = i % len(base_key)
+        shift = shift_func(i)
+        effective_key = alpha[(alpha.index(base_key[key_idx]) + shift) % len(alpha)]
+        pt_char = alpha[(alpha.index(c) - alpha.index(effective_key)) % len(alpha)]
+        result.append(pt_char)
+    return ''.join(result)
 
-# Could this be an anagram of something meaningful?
-# 97 letters - that's a lot for an anagram
+base_key = "ELYOIECBAQK"  # Key derived from BERLINCLOCK
+
+shift_patterns = [
+    ("Linear +1", lambda i: i),
+    ("Linear -1", lambda i: -i),
+    ("Mod 11", lambda i: i % 11),
+    ("Floor div 11", lambda i: i // 11),
+    ("Triangular", lambda i: i * (i + 1) // 2 % 26),
+]
+
+print("Testing progressive shifts with ELYOIECBAQK base key...")
+for name, pattern in shift_patterns:
+    pt = progressive_decrypt(K4, base_key, pattern)
+    words = [w for w in ['BERLIN', 'CLOCK', 'NORTH', 'EAST', 'THE'] if w in pt]
+    if words:
+        print(f"{name}: Found {words}")
+        print(f"  PT: {pt[:60]}...")
+
+# ============================================================
+# ATTACK 4: Null Cipher Detection  
+# ============================================================
+print("\n" + "="*70)
+print("ATTACK 4: NULL CIPHER DETECTION")
+print("="*70)
+
+print("Extracting patterns from K4...")
+
+# Every Nth character
+for n in range(2, 15):
+    for offset in range(n):
+        extracted = K4[offset::n]
+        for word in ['THE', 'AND', 'BERLIN', 'CLOCK', 'CIA', 'NORTH', 'SECRET']:
+            if word in extracted:
+                print(f"Every {n}th char (offset {offset}): ...{word}... in {extracted}")
+
+# First letters of groups
+for gs in range(3, 12):
+    first = ''.join(K4[i] for i in range(0, len(K4), gs))
+    for word in ['THE', 'CIA', 'SPY', 'BERLIN']:
+        if word in first:
+            print(f"First of every {gs}: {first}")
+
+# ============================================================
+# ATTACK 5: Substitution + Transposition Combo
+# ============================================================
+print("\n" + "="*70)
+print("ATTACK 5: DOUBLE LAYER ATTACKS")
+print("="*70)
+
+def reverse_columnar(ct, num_cols):
+    num_rows = math.ceil(len(ct) / num_cols)
+    full_cols = len(ct) % num_cols or num_cols
+    
+    result = [''] * len(ct)
+    pos = 0
+    for col in range(num_cols):
+        col_len = num_rows if col < full_cols else num_rows - 1
+        for row in range(col_len):
+            idx = row * num_cols + col
+            if idx < len(ct):
+                result[idx] = ct[pos]
+            pos += 1
+    return ''.join(c for c in result if c)
+
+print("Testing transposition -> substitution...")
+for cols in range(5, 15):
+    transposed = reverse_columnar(K4, cols)
+    for key in ['KRYPTOS', 'PALIMPSEST', 'ABSCISSA', 'ELYOIECBAQK']:
+        decrypted = vigenere_decrypt(transposed, key)
+        if 'BERLIN' in decrypted or 'CLOCK' in decrypted:
+            print(f"Cols={cols}, Key={key}: {decrypted}")
+
+print("\nTesting substitution -> reverse transposition...")
+for key in ['KRYPTOS', 'PALIMPSEST', 'ELYOIECBAQK']:
+    substituted = vigenere_decrypt(K4, key)
+    for cols in range(5, 15):
+        transposed = reverse_columnar(substituted, cols)
+        if 'BERLIN' in transposed or 'CLOCK' in transposed:
+            print(f"Key={key}, Cols={cols}: {transposed}")
+
+# ============================================================
+# ATTACK 6: Gromark Cipher
+# ============================================================
+print("\n" + "="*70)
+print("ATTACK 6: GROMARK CIPHER")
+print("="*70)
+
+def gromark_decrypt(ct, primer, alpha=STANDARD_ALPHA):
+    key_nums = [int(c) if c.isdigit() else (ord(c.upper()) - 65) % 10 for c in primer]
+    
+    pt = []
+    for i, c in enumerate(ct):
+        if i < len(key_nums):
+            shift = key_nums[i]
+        else:
+            shift = (key_nums[-1] + key_nums[-2]) % 10
+            key_nums.append(shift)
+        
+        pt_char = alpha[(alpha.index(c) - shift) % len(alpha)]
+        pt.append(pt_char)
+    
+    return ''.join(pt)
+
+primers = ['1990', '385765778844', 'KRYPTOS', '63', '97', '11031990', '19901103']
+print("Testing Gromark cipher...")
+for primer in primers:
+    pt = gromark_decrypt(K4, primer)
+    words = [w for w in ['BERLIN', 'CLOCK', 'NORTH', 'EAST', 'THE'] if w in pt]
+    if words:
+        print(f"Primer {primer}: {words}")
+        print(f"  PT: {pt}")
+
+# ============================================================
+# ATTACK 7: Mixed Alphabet Variants
+# ============================================================
+print("\n" + "="*70)
+print("ATTACK 7: ALTERNATIVE ALPHABETS")
+print("="*70)
+
+# What if K4 uses a different keyed alphabet?
+alt_alphabets = [
+    ("Standard", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+    ("Reversed", "ZYXWVUTSRQPONMLKJIHGFEDCBA"),
+    ("KRYPTOS", "KRYPTOSABCDEFGHIJLMNQUVWXZ"),
+    ("PALIMPSEST", "PALIMPSESTBCDFGHJKNOQRUVWXYZ"[:26]),
+    ("ABSCISSA", "ABSCISDEFGHJKLMNOPQRTUVWXYZ"[:26]),
+    ("BERLIN", "BERLINACDFGHJKMOPQSTUVWXYZ"[:26]),
+]
+
+print("Testing different tableau alphabets with key ELYOIECBAQK...")
+for name, alpha in alt_alphabets:
+    if len(set(alpha)) != 26:
+        continue
+    try:
+        pt = vigenere_decrypt(K4, "ELYOIECBAQK", alpha)
+        words = [w for w in ['BERLIN', 'CLOCK', 'NORTH', 'EAST'] if w in pt]
+        if words:
+            print(f"{name}: Found {words}")
+            print(f"  PT: {pt[:60]}...")
+    except:
+        pass
+
+# ============================================================
+# ATTACK 8: XOR with ASCII
+# ============================================================
+print("\n" + "="*70)
+print("ATTACK 8: XOR OPERATIONS")
+print("="*70)
+
+def xor_decrypt(ct, key):
+    result = []
+    for i, c in enumerate(ct):
+        k = key[i % len(key)]
+        xored = chr((ord(c) ^ ord(k)) % 26 + 65)
+        result.append(xored)
+    return ''.join(result)
+
+print("Testing XOR with various keys...")
+xor_keys = ['KRYPTOS', 'PALIMPSEST', 'ABSCISSA', 'BERLIN', 'CLOCK', 'ELYOIECBAQK']
+for key in xor_keys:
+    pt = xor_decrypt(K4, key)
+    words = [w for w in ['BERLIN', 'CLOCK', 'NORTH', 'EAST', 'THE'] if w in pt]
+    if words:
+        print(f"XOR key {key}: {words}")
+        print(f"  PT: {pt}")
 
 print("\n" + "="*70)
 print("CREATIVE ATTACKS COMPLETE")
