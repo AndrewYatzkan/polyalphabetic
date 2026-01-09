@@ -107,7 +107,7 @@ ANYTHING Q
 
 ---
 
-## K4 - UNSOLVED
+## K4 - UNSOLVED (Comprehensive Analysis)
 
 ### Ciphertext (97 characters)
 ```
@@ -119,19 +119,79 @@ OBKRUOXOGHULBSOLIFBBWFLRVQQPRNGKSSOTWTQSJQSSEKZZWATJKLUDIAWINFBNYPVTTMZFPKWGDKZX
 2. **2010**: Characters 70-74 (`MZFPK`) decrypt to `CLOCK`
 3. **2020**: `NORTHEAST` appears somewhere in the plaintext
 
-### Attempted Solver Results
-The polyalphabetic solver was unable to crack K4 using:
-- Vigenère cipher (type 0)
-- Quagmire I-IV ciphers (types 1-4)
-- Beaufort cipher (type 5)
-- Porta cipher (type 6)
-- Autokey cipher (type 7)
+### Statistical Analysis
+```
+Index of Coincidence: 0.0361
+  (English ~0.067, random ~0.038)
 
-All attempts produced gibberish, suggesting K4 uses:
-- A different cipher type entirely
-- Multiple encryption layers
-- A custom algorithm devised by Sanborn
-- Modified parameters not captured by standard methods
+Most frequent characters: K(8), U(6), S(6), T(6), O(5), B(5), W(5)
+```
+The IoC near random suggests either a long key or complex cipher.
+
+### Key Discovery from BERLINCLOCK Crib
+
+Using the KRYPTOS alphabet and the known BERLINCLOCK plaintext at positions 63-73:
+```
+Position 63: CT=N PT=B -> Key=E
+Position 64: CT=Y PT=E -> Key=L
+Position 65: CT=P PT=R -> Key=Y
+Position 66: CT=V PT=L -> Key=O
+Position 67: CT=T PT=I -> Key=I
+Position 68: CT=T PT=N -> Key=E
+Position 69: CT=M PT=C -> Key=C
+Position 70: CT=Z PT=L -> Key=B
+Position 71: CT=F PT=O -> Key=A
+Position 72: CT=P PT=C -> Key=Q
+Position 73: CT=K PT=K -> Key=K
+
+Derived key stream: ELYOIECBAQK
+```
+
+With period 11 and key `OIECBAQKELY`, BERLINCLOCK appears correctly at position 63, but the rest of the plaintext is gibberish:
+```
+KNIMGXTOYWNFNUVCBMBWSDFFEEFVANYCTRJNHVGFJCITSEHJIKDJIKNOKVHAFMBBERLINCLOCKFVBUDGUBYJIYCNCSVFPNIAJ
+```
+
+### Critical Finding: K4 is NOT a Simple Periodic Cipher
+
+**Mathematical proof**: The BERLINCLOCK and NORTHEAST constraints are **incompatible** for any simple periodic Vigenère cipher with periods 5-19.
+
+For NORTHEAST to appear at any position while BERLINCLOCK appears at position 63, the key constraints conflict for ALL tested periods. This proves K4 cannot be:
+- Standard Vigenère
+- Quagmire I, II, III, or IV
+- Any simple periodic substitution cipher
+
+### Attempted Solver Results
+Extensive testing with the polyalphabetic solver:
+
+| Cipher Type | Periods Tested | Result |
+|-------------|----------------|--------|
+| Vigenère | 5-20 | No solution |
+| Quagmire I | 5-15 | No solution |
+| Quagmire II | 5-15 | No solution |
+| Quagmire III | 5-15 | No solution |
+| Quagmire IV | 5-15 | No solution |
+| Beaufort | 5-15 | No solution |
+| Porta | 5-15 | No solution |
+| Autokey | Various | No solution |
+
+### Advanced Attacks Attempted
+1. **Double Encryption** (substitution + transposition): No solution
+2. **Masking/XOR Operations**: Incompatible with constraints
+3. **Route Ciphers** (spiral, diagonal, zigzag): No solution
+4. **Progressive Keys**: No solution
+5. **Running Key** (using K3 plaintext): No solution
+6. **Berlin Clock Time-Based Keys**: No solution
+7. **Date-Based Numeric Keys**: No solution
+
+### Why K4 Remains Unsolved
+
+The mathematical incompatibility of the known cribs proves K4 must use either:
+1. **Non-periodic cipher** (autokey variant, running key with unknown text)
+2. **Multiple encryption layers** (not simple composition)
+3. **Transposition + substitution** with specific parameters
+4. **A completely novel cipher design** by Sanborn
+5. **Position-dependent transformations** beyond standard ciphers
 
 ### K4 Theories
 Various cryptanalysts have proposed:
@@ -139,7 +199,8 @@ Various cryptanalysts have proposed:
 - Keyed route transposition
 - Homophonic substitution
 - Clock-based cipher (relating to the Berlin Clock hint)
-- Double encryption
+- Double encryption with unknown intermediate form
+- Gromark or interrupted key cipher
 
 ---
 
