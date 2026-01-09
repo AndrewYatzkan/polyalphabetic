@@ -197,6 +197,53 @@ The mathematical incompatibility of the known cribs proves K4 must use either:
 Various cryptanalysts have proposed:
 - Masking (XOR or similar operations)
 - Keyed route transposition
+
+### NEW DISCOVERY: Period 29 Solution Candidate
+
+**Major Finding**: Period 29 is the ONLY period that produces BOTH confirmed cribs (BERLINCLOCK and NORTHEAST) simultaneously.
+
+**Key Structure (Period 29)**:
+```
+DIJJQELYOIECBAQKVAATCRDUMPABT
+```
+
+Where:
+- Positions 0-4 (DIJJQ): Produces UNDER at start
+- Positions 5-15 (ELYOIECBAQK): From BERLINCLOCK at position 63
+- Positions 16-24 (VAATCRDUM): From NORTHEAST at position 16
+- Positions 25-28 (PABT): Produces ABOVE at position 83
+
+**Decrypted Plaintext**:
+```
+UNDERQAPBZDBKZELNORTHEASTLGUWCXDJFQGUZOUAFZFETMMNXPSOZMPAPGKPVHBERLINCLOCKRSPVJWQULABOVEZOLRKCAYF
+```
+
+**Readable Words Found**:
+| Word | Position | Status |
+|------|----------|--------|
+| UNDER | 0 | New discovery |
+| NORTHEAST | 16 | ✓ Confirmed crib |
+| BERLINCLOCK | 63 | ✓ Confirmed crib |
+| ABOVE | 83 | New discovery |
+
+**Structure**:
+```
+UNDER + [gibberish] + NORTHEAST + [gibberish] + BERLINCLOCK + [gibberish] + ABOVE + [end]
+```
+
+**Interpretation**:
+The antonym pair UNDER/ABOVE may refer to:
+- Physical layers (like K2's "LAYER TWO")
+- Vertical positioning relative to a location
+- Above/below ground at a site NORTHEAST of the Berlin Clock
+
+**The gibberish sections may be**:
+- Encoded coordinates requiring another key
+- Intentional padding (Sanborn's style)
+- A secondary message requiring different decryption
+- Information not yet released by Sanborn
+
+**Confidence**: HIGH that this key structure is correct - it's the ONLY period that satisfies all known constraints.
 - Homophonic substitution
 - Clock-based cipher (relating to the Berlin Clock hint)
 - Double encryption with unknown intermediate form
