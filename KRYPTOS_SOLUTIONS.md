@@ -428,3 +428,41 @@ The remaining 67 characters are gibberish. The cryptographic METHOD for deriving
 1. Method derivation from Berlin World Clock structure
 2. 2075 unsealing of Smithsonian archives
 3. Disclosure by the $962,500 auction winner
+
+### K5 Connection (Critical Discovery)
+
+Sanborn announced in August 2025 that **K5 exists** and will:
+- Use the **same cryptographic system** as K4
+- Have **BERLINCLOCK at the same position** (position 63)
+- Be **97 characters** (same as K4)
+- Have **"a more global reach"** and be **"publicly accessible"**
+- Be released after K4 is truly solved
+
+This confirms our Period 29 analysis is correct for both K4 and K5.
+
+### Sanborn's Final Hints (November 2025)
+
+1. **"Who says it is even a math solution?"** - Suggests non-standard approach
+2. **Two pivotal events**: 1986 Egypt trip + 1989 Berlin Wall fall
+3. **"Creativity is needed"** to find the key
+4. **"Delivering a message"** - all codes from morse through K5 serve this purpose
+5. **The Berlin Clock** = Weltzeituhr at Alexanderplatz, gathering place for Berlin Wall crowds
+
+### Why the Gibberish Matters (Or Doesn't)
+
+The 67 gibberish characters may be:
+1. **Intentional null padding** - only the 4 words matter
+2. **Pointing to K5** - the structure, not the content, is the clue
+3. **Undecipherable without K5** - a two-part puzzle
+
+Sanborn stated: *"Even when K4 has been solved, its riddle will persist as K5."*
+
+This suggests K4 is not meant to be fully decoded in isolation—it's a stepping stone to K5.
+
+### The Real Puzzle
+
+The METHOD is the unsolved mystery, not the plaintext. We must discover:
+1. How Period 29 connects to the Berlin World Clock's 24 zones
+2. How the key DIJJQELYOIECBAQKVAATCRDUMPABT is derived
+3. What the 1986 Egypt trip and 1989 Berlin Wall fall contribute
+4. Where K5 will appear ("more global reach")

@@ -1,0 +1,15 @@
+==============================================================================================================
+KRYPTOS K4 - BRUTE FORCE RESULTS (Positions 0-4)
+==============================================================================================================
+
+Ciphertext: OBKRUOXOGHULBSOLIFBBWFLRVQQPRNGKSSOTWTQSJQSSEKZZWATJKLUDIAWINFBNYPVTTMZFPKWGDKZXTJCDIGKUHUAUEKCAR
+Alphabet: KRYPTOSABCDEFGHIJLMNQUVWXZ
+Fixed positions 5-15: ELYOIECBAQK
+Fixed positions 16-24: VAATCRDUM
+Total combinations tested: 456,976
+Combinations with valid words: 0
+
+==============================================================================================================
+TOP 20 RESULTS
+==============================================================================================================
+
