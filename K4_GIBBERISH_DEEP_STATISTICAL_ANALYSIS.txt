@@ -1,0 +1,861 @@
+
+================== DEEP STATISTICAL ANALYSIS: K4 GIBBERISH ==================
+
+This analysis examines the 67-character K4 gibberish combined text
+and compares individual gaps to determine encryption characteristics.
+
+
+================== SECTION 1: COMBINED GIBBERISH (67 chars) ==================
+
+────────────────────────────────────────────────────────────────────────────────
+Analysis of: COMBINED K4 GIBBERISH
+Length: 67 characters
+────────────────────────────────────────────────────────────────────────────────
+
+1. LETTER FREQUENCY
+Letter   Count    Percent      English%     Diff      
+──────────────────────────────────────────────────
+A        4          5.97%        8.17%    -2.20%
+B        2          2.99%        1.49%     1.50%
+C        2          2.99%        2.78%     0.21%
+D        2          2.99%        4.25%    -1.26%
+E        2          2.99%       12.70%    -9.71%
+F        4          5.97%        2.23%     3.74%
+G        3          4.48%        2.02%     2.46%
+H        1          1.49%        6.09%    -4.60%
+I        0          0.00%        6.97%    -6.97%
+J        2          2.99%        0.15%     2.84%
+K        3          4.48%        0.77%     3.71%
+L        4          5.97%        4.03%     1.94%
+M        3          4.48%        2.41%     2.07%
+N        1          1.49%        6.75%    -5.26%
+O        3          4.48%        7.51%    -3.03%
+P        6          8.96%        1.93%     7.03%
+Q        3          4.48%        0.10%     4.38%
+R        2          2.99%        5.99%    -3.00%
+S        2          2.99%        6.33%    -3.34%
+T        1          1.49%        9.06%    -7.57%
+U        4          5.97%        2.76%     3.21%
+V        2          2.99%        0.98%     2.01%
+W        2          2.99%        2.36%     0.63%
+X        2          2.99%        0.15%     2.84%
+Y        1          1.49%        1.97%    -0.48%
+Z        6          8.96%        0.07%     8.89%
+
+2. INDEX OF COINCIDENCE (IoC)
+Text IoC: 0.035730
+English IoC: ~0.067
+Random IoC: ~0.038
+Classification: RANDOM-LIKE (strongly encrypted or truly random)
+
+3. SHANNON ENTROPY
+Text entropy: 4.4721 bits/char
+Maximum entropy (random): 4.7004 bits/char
+Percentage of maximum: 95.1%
+
+4. UNIQUE LETTERS
+Unique letters: 25/26
+Missing letters: 1
+Missing: I
+
+5. CHI-SQUARED TESTS
+vs English frequency: χ² = 1022.02
+  (Lower is better match to English)
+vs Random frequency: χ² = 20.31
+  (Lower is better match to random)
+Critical value (df=25, α=0.05): 37.65
+Result: Significantly different from English (p < 0.05)
+
+6. MOST FREQUENT LETTERS
+  P: 6 times (9.0%)
+  Z: 6 times (9.0%)
+  A: 4 times (6.0%)
+  L: 4 times (6.0%)
+  U: 4 times (6.0%)
+  F: 4 times (6.0%)
+  Q: 3 times (4.5%)
+  K: 3 times (4.5%)
+  G: 3 times (4.5%)
+  O: 3 times (4.5%)
+
+7. BIGRAM/TRIGRAM ANALYSIS
+Unique bigrams: 62
+Unique trigrams: 65
+Most common bigrams:
+  AP: 2
+  GU: 2
+  ZO: 2
+  PV: 2
+  QA: 1
+  PB: 1
+  BZ: 1
+  ZD: 1
+  DB: 1
+  BK: 1
+
+8. DOUBLED LETTERS
+Total doubled letters: 2
+Percentage: 2.99%
+Doubled letter counts:
+  LL: 1
+  MM: 1
+
+9. REPEATING SEQUENCES
+  'AP' at positions [42], distances: []
+  'GU' at positions [21], distances: []
+  'ZO' at positions [58], distances: []
+  'PV' at positions [51], distances: []
+
+========================= SECTION 2: INDIVIDUAL GAPS =========================
+
+────────────────────────────────────────────────────────────────────────────────
+Analysis of: GAP1 (11 chars)
+Length: 11 characters
+────────────────────────────────────────────────────────────────────────────────
+
+1. LETTER FREQUENCY
+Letter   Count    Percent      English%     Diff      
+──────────────────────────────────────────────────
+A        1          9.09%        8.17%     0.92%
+B        2         18.18%        1.49%    16.69%
+C        0          0.00%        2.78%    -2.78%
+D        1          9.09%        4.25%     4.84%
+E        1          9.09%       12.70%    -3.61%
+F        0          0.00%        2.23%    -2.23%
+G        0          0.00%        2.02%    -2.02%
+H        0          0.00%        6.09%    -6.09%
+I        0          0.00%        6.97%    -6.97%
+J        0          0.00%        0.15%    -0.15%
+K        1          9.09%        0.77%     8.32%
+L        1          9.09%        4.03%     5.06%
+M        0          0.00%        2.41%    -2.41%
+N        0          0.00%        6.75%    -6.75%
+O        0          0.00%        7.51%    -7.51%
+P        1          9.09%        1.93%     7.16%
+Q        1          9.09%        0.10%     8.99%
+R        0          0.00%        5.99%    -5.99%
+S        0          0.00%        6.33%    -6.33%
+T        0          0.00%        9.06%    -9.06%
+U        0          0.00%        2.76%    -2.76%
+V        0          0.00%        0.98%    -0.98%
+W        0          0.00%        2.36%    -2.36%
+X        0          0.00%        0.15%    -0.15%
+Y        0          0.00%        1.97%    -1.97%
+Z        2         18.18%        0.07%    18.11%
+
+2. INDEX OF COINCIDENCE (IoC)
+Text IoC: 0.036364
+English IoC: ~0.067
+Random IoC: ~0.038
+Classification: RANDOM-LIKE (strongly encrypted or truly random)
+
+3. SHANNON ENTROPY
+Text entropy: 3.0958 bits/char
+Maximum entropy (random): 4.7004 bits/char
+Percentage of maximum: 65.9%
+
+4. UNIQUE LETTERS
+Unique letters: 9/26
+Missing letters: 17
+Missing: C F G H I J M N O R S T U V W X Y
+
+5. CHI-SQUARED TESTS
+vs English frequency: χ² = 646.54
+  (Lower is better match to English)
+vs Random frequency: χ² = 24.45
+  (Lower is better match to random)
+Critical value (df=25, α=0.05): 37.65
+Result: Significantly different from English (p < 0.05)
+
+6. MOST FREQUENT LETTERS
+  B: 2 times (18.2%)
+  Z: 2 times (18.2%)
+  Q: 1 times (9.1%)
+  A: 1 times (9.1%)
+  P: 1 times (9.1%)
+  D: 1 times (9.1%)
+  K: 1 times (9.1%)
+  E: 1 times (9.1%)
+  L: 1 times (9.1%)
+
+7. BIGRAM/TRIGRAM ANALYSIS
+Unique bigrams: 10
+Unique trigrams: 9
+Most common bigrams:
+  QA: 1
+  AP: 1
+  PB: 1
+  BZ: 1
+  ZD: 1
+  DB: 1
+  BK: 1
+  KZ: 1
+  ZE: 1
+  EL: 1
+
+8. DOUBLED LETTERS
+Total doubled letters: 0
+Percentage: 0.00%
+
+9. REPEATING SEQUENCES
+  No repeating sequences found
+
+────────────────────────────────────────────────────────────────────────────────
+Analysis of: GAP2 (38 chars)
+Length: 38 characters
+────────────────────────────────────────────────────────────────────────────────
+
+1. LETTER FREQUENCY
+Letter   Count    Percent      English%     Diff      
+──────────────────────────────────────────────────
+A        2          5.26%        8.17%    -2.91%
+B        0          0.00%        1.49%    -1.49%
+C        1          2.63%        2.78%    -0.15%
+D        1          2.63%        4.25%    -1.62%
+E        1          2.63%       12.70%   -10.07%
+F        3          7.89%        2.23%     5.66%
+G        3          7.89%        2.02%     5.87%
+H        1          2.63%        6.09%    -3.46%
+I        0          0.00%        6.97%    -6.97%
+J        1          2.63%        0.15%     2.48%
+K        1          2.63%        0.77%     1.86%
+L        1          2.63%        4.03%    -1.40%
+M        3          7.89%        2.41%     5.48%
+N        1          2.63%        6.75%    -4.12%
+O        2          5.26%        7.51%    -2.25%
+P        4         10.53%        1.93%     8.60%
+Q        1          2.63%        0.10%     2.53%
+R        0          0.00%        5.99%    -5.99%
+S        1          2.63%        6.33%    -3.70%
+T        1          2.63%        9.06%    -6.43%
+U        3          7.89%        2.76%     5.13%
+V        1          2.63%        0.98%     1.65%
+W        1          2.63%        2.36%     0.27%
+X        2          5.26%        0.15%     5.11%
+Y        0          0.00%        1.97%    -1.97%
+Z        3          7.89%        0.07%     7.82%
+
+2. INDEX OF COINCIDENCE (IoC)
+Text IoC: 0.034139
+English IoC: ~0.067
+Random IoC: ~0.038
+Classification: RANDOM-LIKE (strongly encrypted or truly random)
+
+3. SHANNON ENTROPY
+Text entropy: 4.2539 bits/char
+Maximum entropy (random): 4.7004 bits/char
+Percentage of maximum: 90.5%
+
+4. UNIQUE LETTERS
+Unique letters: 22/26
+Missing letters: 4
+Missing: B I R Y
+
+5. CHI-SQUARED TESTS
+vs English frequency: χ² = 490.82
+  (Lower is better match to English)
+vs Random frequency: χ² = 20.84
+  (Lower is better match to random)
+Critical value (df=25, α=0.05): 37.65
+Result: Significantly different from English (p < 0.05)
+
+6. MOST FREQUENT LETTERS
+  P: 4 times (10.5%)
+  G: 3 times (7.9%)
+  U: 3 times (7.9%)
+  F: 3 times (7.9%)
+  Z: 3 times (7.9%)
+  M: 3 times (7.9%)
+  X: 2 times (5.3%)
+  O: 2 times (5.3%)
+  A: 2 times (5.3%)
+  L: 1 times (2.6%)
+
+7. BIGRAM/TRIGRAM ANALYSIS
+Unique bigrams: 36
+Unique trigrams: 36
+Most common bigrams:
+  GU: 2
+  LG: 1
+  UW: 1
+  WC: 1
+  CX: 1
+  XD: 1
+  DJ: 1
+  JF: 1
+  FQ: 1
+  QG: 1
+
+8. DOUBLED LETTERS
+Total doubled letters: 1
+Percentage: 2.63%
+Doubled letter counts:
+  MM: 1
+
+9. REPEATING SEQUENCES
+  'GU' at positions [10], distances: []
+
+────────────────────────────────────────────────────────────────────────────────
+Analysis of: GAP3 (9 chars)
+Length: 9 characters
+────────────────────────────────────────────────────────────────────────────────
+
+1. LETTER FREQUENCY
+Letter   Count    Percent      English%     Diff      
+──────────────────────────────────────────────────
+A        0          0.00%        8.17%    -8.17%
+B        0          0.00%        1.49%    -1.49%
+C        0          0.00%        2.78%    -2.78%
+D        0          0.00%        4.25%    -4.25%
+E        0          0.00%       12.70%   -12.70%
+F        0          0.00%        2.23%    -2.23%
+G        0          0.00%        2.02%    -2.02%
+H        0          0.00%        6.09%    -6.09%
+I        0          0.00%        6.97%    -6.97%
+J        1         11.11%        0.15%    10.96%
+K        0          0.00%        0.77%    -0.77%
+L        1         11.11%        4.03%     7.08%
+M        0          0.00%        2.41%    -2.41%
+N        0          0.00%        6.75%    -6.75%
+O        0          0.00%        7.51%    -7.51%
+P        1         11.11%        1.93%     9.18%
+Q        1         11.11%        0.10%    11.01%
+R        1         11.11%        5.99%     5.12%
+S        1         11.11%        6.33%     4.78%
+T        0          0.00%        9.06%    -9.06%
+U        1         11.11%        2.76%     8.35%
+V        1         11.11%        0.98%    10.13%
+W        1         11.11%        2.36%     8.75%
+X        0          0.00%        0.15%    -0.15%
+Y        0          0.00%        1.97%    -1.97%
+Z        0          0.00%        0.07%    -0.07%
+
+2. INDEX OF COINCIDENCE (IoC)
+Text IoC: 0.000000
+English IoC: ~0.067
+Random IoC: ~0.038
+Classification: RANDOM-LIKE (strongly encrypted or truly random)
+
+3. SHANNON ENTROPY
+Text entropy: 3.1699 bits/char
+Maximum entropy (random): 4.7004 bits/char
+Percentage of maximum: 67.4%
+
+4. UNIQUE LETTERS
+Unique letters: 9/26
+Missing letters: 17
+Missing: A B C D E F G H I K M N O T X Y Z
+
+5. CHI-SQUARED TESTS
+vs English frequency: χ² = 208.38
+  (Lower is better match to English)
+vs Random frequency: χ² = 17.00
+  (Lower is better match to random)
+Critical value (df=25, α=0.05): 37.65
+Result: Significantly different from English (p < 0.05)
+
+6. MOST FREQUENT LETTERS
+  R: 1 times (11.1%)
+  S: 1 times (11.1%)
+  P: 1 times (11.1%)
+  V: 1 times (11.1%)
+  J: 1 times (11.1%)
+  W: 1 times (11.1%)
+  Q: 1 times (11.1%)
+  U: 1 times (11.1%)
+  L: 1 times (11.1%)
+
+7. BIGRAM/TRIGRAM ANALYSIS
+Unique bigrams: 8
+Unique trigrams: 7
+Most common bigrams:
+  RS: 1
+  SP: 1
+  PV: 1
+  VJ: 1
+  JW: 1
+  WQ: 1
+  QU: 1
+  UL: 1
+
+8. DOUBLED LETTERS
+Total doubled letters: 0
+Percentage: 0.00%
+
+9. REPEATING SEQUENCES
+  No repeating sequences found
+
+────────────────────────────────────────────────────────────────────────────────
+Analysis of: GAP4 (9 chars)
+Length: 9 characters
+────────────────────────────────────────────────────────────────────────────────
+
+1. LETTER FREQUENCY
+Letter   Count    Percent      English%     Diff      
+──────────────────────────────────────────────────
+A        1         11.11%        8.17%     2.94%
+B        0          0.00%        1.49%    -1.49%
+C        1         11.11%        2.78%     8.33%
+D        0          0.00%        4.25%    -4.25%
+E        0          0.00%       12.70%   -12.70%
+F        1         11.11%        2.23%     8.88%
+G        0          0.00%        2.02%    -2.02%
+H        0          0.00%        6.09%    -6.09%
+I        0          0.00%        6.97%    -6.97%
+J        0          0.00%        0.15%    -0.15%
+K        1         11.11%        0.77%    10.34%
+L        1         11.11%        4.03%     7.08%
+M        0          0.00%        2.41%    -2.41%
+N        0          0.00%        6.75%    -6.75%
+O        1         11.11%        7.51%     3.60%
+P        0          0.00%        1.93%    -1.93%
+Q        0          0.00%        0.10%    -0.10%
+R        1         11.11%        5.99%     5.12%
+S        0          0.00%        6.33%    -6.33%
+T        0          0.00%        9.06%    -9.06%
+U        0          0.00%        2.76%    -2.76%
+V        0          0.00%        0.98%    -0.98%
+W        0          0.00%        2.36%    -2.36%
+X        0          0.00%        0.15%    -0.15%
+Y        1         11.11%        1.97%     9.14%
+Z        1         11.11%        0.07%    11.04%
+
+2. INDEX OF COINCIDENCE (IoC)
+Text IoC: 0.000000
+English IoC: ~0.067
+Random IoC: ~0.038
+Classification: RANDOM-LIKE (strongly encrypted or truly random)
+
+3. SHANNON ENTROPY
+Text entropy: 3.1699 bits/char
+Maximum entropy (random): 4.7004 bits/char
+Percentage of maximum: 67.4%
+
+4. UNIQUE LETTERS
+Unique letters: 9/26
+Missing letters: 17
+Missing: B D E G H I J M N P Q S T U V W X
+
+5. CHI-SQUARED TESTS
+vs English frequency: χ² = 186.23
+  (Lower is better match to English)
+vs Random frequency: χ² = 17.00
+  (Lower is better match to random)
+Critical value (df=25, α=0.05): 37.65
+Result: Significantly different from English (p < 0.05)
+
+6. MOST FREQUENT LETTERS
+  Z: 1 times (11.1%)
+  O: 1 times (11.1%)
+  L: 1 times (11.1%)
+  R: 1 times (11.1%)
+  K: 1 times (11.1%)
+  C: 1 times (11.1%)
+  A: 1 times (11.1%)
+  Y: 1 times (11.1%)
+  F: 1 times (11.1%)
+
+7. BIGRAM/TRIGRAM ANALYSIS
+Unique bigrams: 8
+Unique trigrams: 7
+Most common bigrams:
+  ZO: 1
+  OL: 1
+  LR: 1
+  RK: 1
+  KC: 1
+  CA: 1
+  AY: 1
+  YF: 1
+
+8. DOUBLED LETTERS
+Total doubled letters: 0
+Percentage: 0.00%
+
+9. REPEATING SEQUENCES
+  No repeating sequences found
+
+====================== SECTION 3: K1, K2, K3 COMPARISON ======================
+
+────────────────────────────────────────────────────────────────────────────────
+Analysis of: K1 CIPHERTEXT (63 chars)
+Length: 63 characters
+────────────────────────────────────────────────────────────────────────────────
+
+1. LETTER FREQUENCY
+Letter   Count    Percent      English%     Diff      
+──────────────────────────────────────────────────
+A        1          1.59%        8.17%    -6.58%
+B        1          1.59%        1.49%     0.10%
+C        0          0.00%        2.78%    -2.78%
+D        4          6.35%        4.25%     2.10%
+E        2          3.17%       12.70%    -9.53%
+F        4          6.35%        2.23%     4.12%
+G        1          1.59%        2.02%    -0.43%
+H        2          3.17%        6.09%    -2.92%
+I        1          1.59%        6.97%    -5.38%
+J        3          4.76%        0.15%     4.61%
+K        3          4.76%        0.77%     3.99%
+L        4          6.35%        4.03%     2.32%
+M        3          4.76%        2.41%     2.35%
+N        2          3.17%        6.75%    -3.58%
+O        0          0.00%        7.51%    -7.51%
+P        1          1.59%        1.93%    -0.34%
+Q        5          7.94%        0.10%     7.84%
+R        4          6.35%        5.99%     0.36%
+S        2          3.17%        6.33%    -3.16%
+T        3          4.76%        9.06%    -4.30%
+U        4          6.35%        2.76%     3.59%
+V        4          6.35%        0.98%     5.37%
+W        0          0.00%        2.36%    -2.36%
+X        2          3.17%        0.15%     3.02%
+Y        5          7.94%        1.97%     5.97%
+Z        2          3.17%        0.07%     3.10%
+
+2. INDEX OF COINCIDENCE (IoC)
+Text IoC: 0.037890
+English IoC: ~0.067
+Random IoC: ~0.038
+Classification: RANDOM-LIKE (strongly encrypted or truly random)
+
+3. SHANNON ENTROPY
+Text entropy: 4.3544 bits/char
+Maximum entropy (random): 4.7004 bits/char
+Percentage of maximum: 92.6%
+
+4. UNIQUE LETTERS
+Unique letters: 23/26
+Missing letters: 3
+Missing: C O W
+
+5. CHI-SQUARED TESTS
+vs English frequency: χ² = 677.91
+  (Lower is better match to English)
+vs Random frequency: χ² = 24.08
+  (Lower is better match to random)
+Critical value (df=25, α=0.05): 37.65
+Result: Significantly different from English (p < 0.05)
+
+6. MOST FREQUENT LETTERS
+  Y: 5 times (7.9%)
+  Q: 5 times (7.9%)
+  U: 4 times (6.3%)
+  F: 4 times (6.3%)
+  L: 4 times (6.3%)
+  R: 4 times (6.3%)
+  D: 4 times (6.3%)
+  V: 4 times (6.3%)
+  M: 3 times (4.8%)
+  J: 3 times (4.8%)
+
+7. BIGRAM/TRIGRAM ANALYSIS
+Unique bigrams: 56
+Unique trigrams: 58
+Most common bigrams:
+  ZL: 2
+  YU: 2
+  VJ: 2
+  JY: 2
+  YQ: 2
+  QT: 2
+  EM: 1
+  MU: 1
+  UF: 1
+  FP: 1
+
+8. DOUBLED LETTERS
+Total doubled letters: 1
+Percentage: 1.59%
+Doubled letter counts:
+  LL: 1
+
+9. REPEATING SEQUENCES
+  'ZL' at positions [18], distances: []
+  'YU' at positions [42], distances: []
+  'VJ' at positions [50], distances: []
+  'JY' at positions [51], distances: []
+  'YQ' at positions [52], distances: []
+  'QT' at positions [53], distances: []
+  'VJY' at positions [50], distances: []
+  'JYQ' at positions [51], distances: []
+  'YQT' at positions [52], distances: []
+  'VJYQ' at positions [50], distances: []
+
+────────────────────────────────────────────────────────────────────────────────
+Analysis of: K2 CIPHERTEXT (370 chars)
+Length: 370 characters
+────────────────────────────────────────────────────────────────────────────────
+
+1. LETTER FREQUENCY
+Letter   Count    Percent      English%     Diff      
+──────────────────────────────────────────────────
+A        9          2.43%        8.17%    -5.74%
+B        7          1.89%        1.49%     0.40%
+C        7          1.89%        2.78%    -0.89%
+D        24         6.49%        4.25%     2.24%
+E        29         7.84%       12.70%    -4.86%
+F        27         7.30%        2.23%     5.07%
+G        23         6.22%        2.02%     4.20%
+H        14         3.78%        6.09%    -2.31%
+I        7          1.89%        6.97%    -5.08%
+J        13         3.51%        0.15%     3.36%
+K        15         4.05%        0.77%     3.28%
+L        18         4.86%        4.03%     0.83%
+M        16         4.32%        2.41%     1.91%
+N        15         4.05%        6.75%    -2.70%
+O        3          0.81%        7.51%    -6.70%
+P        15         4.05%        1.93%     2.12%
+Q        24         6.49%        0.10%     6.39%
+R        11         2.97%        5.99%    -3.02%
+S        5          1.35%        6.33%    -4.98%
+T        13         3.51%        9.06%    -5.55%
+U        20         5.41%        2.76%     2.65%
+V        16         4.32%        0.98%     3.34%
+W        8          2.16%        2.36%    -0.20%
+X        7          1.89%        0.15%     1.74%
+Y        6          1.62%        1.97%    -0.35%
+Z        18         4.86%        0.07%     4.79%
+
+2. INDEX OF COINCIDENCE (IoC)
+Text IoC: 0.045279
+English IoC: ~0.067
+Random IoC: ~0.038
+Classification: INTERMEDIATE (possible polyalphabetic or mixed)
+
+3. SHANNON ENTROPY
+Text entropy: 4.5197 bits/char
+Maximum entropy (random): 4.7004 bits/char
+Percentage of maximum: 96.2%
+
+4. UNIQUE LETTERS
+Unique letters: 26/26
+Missing letters: 0
+
+5. CHI-SQUARED TESTS
+vs English frequency: χ² = 3375.04
+  (Lower is better match to English)
+vs Random frequency: χ² = 90.41
+  (Lower is better match to random)
+Critical value (df=25, α=0.05): 37.65
+Result: Significantly different from English (p < 0.05)
+
+6. MOST FREQUENT LETTERS
+  E: 29 times (7.8%)
+  F: 27 times (7.3%)
+  D: 24 times (6.5%)
+  Q: 24 times (6.5%)
+  G: 23 times (6.2%)
+  U: 20 times (5.4%)
+  Z: 18 times (4.9%)
+  L: 18 times (4.9%)
+  V: 16 times (4.3%)
+  M: 16 times (4.3%)
+
+7. BIGRAM/TRIGRAM ANALYSIS
+Unique bigrams: 256
+Unique trigrams: 351
+Most common bigrams:
+  EE: 4
+  ET: 4
+  HK: 4
+  FQ: 4
+  DQ: 4
+  LG: 4
+  ED: 4
+  UN: 4
+  KF: 4
+  HD: 4
+
+8. DOUBLED LETTERS
+Total doubled letters: 21
+Percentage: 5.68%
+Doubled letter counts:
+  EE: 4
+  KK: 2
+  GG: 2
+  RR: 2
+  HH: 2
+  DD: 2
+  FF: 2
+  MM: 1
+  QQ: 1
+  TT: 1
+  ZZ: 1
+  LL: 1
+
+9. REPEATING SEQUENCES
+  'EE' at positions [103, 183, 289, 183, 289, 289], distances: [80, 106, -106, 106, 0]
+  'ET' at positions [22, 126, 367, 126, 367, 367], distances: [104, 241, -241, 241, 0]
+  'HK' at positions [34, 139, 143, 139, 143, 143], distances: [105, 4, -4, 4, 0]
+  'FQ' at positions [42, 274, 298, 274, 298, 298], distances: [232, 24, -24, 24, 0]
+  'DQ' at positions [45, 229, 338, 229, 338, 338], distances: [184, 109, -109, 109, 0]
+  'LG' at positions [217, 303, 358, 303, 358, 358], distances: [86, 55, -55, 55, 0]
+  'ED' at positions [272, 306, 344, 306, 344, 344], distances: [34, 38, -38, 38, 0]
+  'UN' at positions [88, 208, 270, 208, 270, 270], distances: [120, 62, -62, 62, 0]
+  'KF' at positions [188, 244, 284, 244, 284, 284], distances: [56, 40, -40, 40, 0]
+  'HD' at positions [161, 241, 347, 241, 347, 347], distances: [80, 106, -106, 106, 0]
+
+────────────────────────────────────────────────────────────────────────────────
+Analysis of: K3 CIPHERTEXT (336 chars)
+Length: 336 characters
+────────────────────────────────────────────────────────────────────────────────
+
+1. LETTER FREQUENCY
+Letter   Count    Percent      English%     Diff      
+──────────────────────────────────────────────────
+A        26         7.74%        8.17%    -0.43%
+B        6          1.79%        1.49%     0.30%
+C        9          2.68%        2.78%    -0.10%
+D        17         5.06%        4.25%     0.81%
+E        50        14.88%       12.70%     2.18%
+F        8          2.38%        2.23%     0.15%
+G        6          1.79%        2.02%    -0.23%
+H        22         6.55%        6.09%     0.46%
+I        21         6.25%        6.97%    -0.72%
+J        0          0.00%        0.15%    -0.15%
+K        1          0.30%        0.77%    -0.47%
+L        16         4.76%        4.03%     0.73%
+M        12         3.57%        2.41%     1.16%
+N        22         6.55%        6.75%    -0.20%
+O        18         5.36%        7.51%    -2.15%
+P        8          2.38%        1.93%     0.45%
+Q        1          0.30%        0.10%     0.20%
+R        23         6.85%        5.99%     0.86%
+S        16         4.76%        6.33%    -1.57%
+T        31         9.23%        9.06%     0.17%
+U        5          1.49%        2.76%    -1.27%
+V        1          0.30%        0.98%    -0.68%
+W        8          2.38%        2.36%     0.02%
+X        1          0.30%        0.15%     0.15%
+Y        8          2.38%        1.97%     0.41%
+Z        0          0.00%        0.07%    -0.07%
+
+2. INDEX OF COINCIDENCE (IoC)
+Text IoC: 0.066151
+English IoC: ~0.067
+Random IoC: ~0.038
+Classification: ENGLISH-LIKE (probable plaintext or weakly encrypted)
+
+3. SHANNON ENTROPY
+Text entropy: 4.1268 bits/char
+Maximum entropy (random): 4.7004 bits/char
+Percentage of maximum: 87.8%
+
+4. UNIQUE LETTERS
+Unique letters: 24/26
+Missing letters: 2
+Missing: J Z
+
+5. CHI-SQUARED TESTS
+vs English frequency: χ² = 16.42
+  (Lower is better match to English)
+vs Random frequency: χ² = 266.18
+  (Lower is better match to random)
+Critical value (df=25, α=0.05): 37.65
+Result: Not significantly different from English
+
+6. MOST FREQUENT LETTERS
+  E: 50 times (14.9%)
+  T: 31 times (9.2%)
+  A: 26 times (7.7%)
+  R: 23 times (6.8%)
+  N: 22 times (6.5%)
+  H: 22 times (6.5%)
+  I: 21 times (6.2%)
+  O: 18 times (5.4%)
+  D: 17 times (5.1%)
+  L: 16 times (4.8%)
+
+7. BIGRAM/TRIGRAM ANALYSIS
+Unique bigrams: 203
+Unique trigrams: 317
+Most common bigrams:
+  TE: 8
+  EN: 6
+  AE: 6
+  EE: 6
+  EO: 5
+  OH: 4
+  HN: 4
+  LS: 4
+  HE: 4
+  NR: 4
+
+8. DOUBLED LETTERS
+Total doubled letters: 18
+Percentage: 5.36%
+Doubled letter counts:
+  EE: 6
+  DD: 3
+  LL: 2
+  TT: 2
+  NN: 1
+  II: 1
+  HH: 1
+  AA: 1
+  SS: 1
+
+9. REPEATING SEQUENCES
+  'TE' at positions [100, 108, 141, 176, 185, 231, 263, 108, 141, 176, 185, 231, 263, 141, 176, 185, 231, 263, 176, 185, 231, 263, 185, 231, 263, 231, 263, 263], distances: [8, 33, 35, 9, 46, 32, -155, 33, 35, 9, 46, 32, -122, 35, 9, 46, 32, -87, 9, 46, 32, -78, 46, 32, -32, 32, 0]
+  'EN' at positions [102, 109, 133, 147, 169, 109, 133, 147, 169, 133, 147, 169, 147, 169, 169], distances: [7, 24, 14, 22, -60, 24, 14, 22, -36, 14, 22, -22, 22, 0]
+  'AE' at positions [119, 136, 200, 208, 248, 136, 200, 208, 248, 200, 208, 248, 208, 248, 248], distances: [17, 64, 8, 40, -112, 64, 8, 40, -48, 8, 40, -40, 40, 0]
+  'EE' at positions [146, 180, 186, 209, 309, 180, 186, 209, 309, 186, 209, 309, 209, 309, 309], distances: [34, 6, 23, 100, -129, 6, 23, 100, -123, 23, 100, -100, 100, 0]
+  'EO' at positions [19, 120, 201, 298, 120, 201, 298, 201, 298, 298], distances: [101, 81, 97, -178, 81, 97, -97, 97, 0]
+  'OH' at positions [49, 299, 333, 299, 333, 333], distances: [250, 34, -34, 34, 0]
+  'HN' at positions [27, 70, 322, 70, 322, 322], distances: [43, 252, -252, 252, 0]
+  'LS' at positions [44, 126, 324, 126, 324, 324], distances: [82, 198, -198, 198, 0]
+  'HE' at positions [145, 166, 308, 166, 308, 308], distances: [21, 142, -142, 142, 0]
+  'NR' at positions [71, 103, 213, 103, 213, 213], distances: [32, 110, -110, 110, 0]
+
+============================ COMPARATIVE ANALYSIS ============================
+
+Metric                    Gibberish      Gap1           Gap2           Gap3           Gap4           K1             K2             K3             
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Length                    67             11             38             9              9              63             370            336            
+Index of Coincidence      0.035730       0.036364       0.034139       0.000000       0.000000       0.037890       0.045279       0.066151       
+Entropy (bits/char)       4.4721         3.0958         4.2539         3.1699         3.1699         4.3544         4.5197         4.1268         
+Unique Letters            25             /269              /2622             /269              /269              /2623             /2626             /2624             /26
+Chi² vs English           1022.02        646.54         490.82         208.38         186.23         677.91         3375.04        16.42          
+Chi² vs Random            20.31          24.45          20.84          17.00          17.00          24.08          90.41          266.18         
+
+=================== SECTION 4: STATISTICAL INTERPRETATION ===================
+
+1. GIBBERISH NATURE ANALYSIS
+   Combined gibberish IoC: 0.035730
+   → RANDOM/STRONGLY ENCRYPTED: Low IoC suggests true randomness or strong encryption
+
+2. ENTROPY ANALYSIS
+   Combined gibberish entropy: 4.4721 bits/char
+   Entropy ratio: 95.1% of maximum
+   → Nearly perfect randomness (low entropy)
+
+3. CHI-SQUARED ANALYSIS
+   vs English: 1022.02 (lower = more English-like)
+   vs Random:  20.31 (lower = more random-like)
+   → Significantly deviates from English distribution
+   → Could match random distribution
+
+4. GAP COMPARISON
+   Gap IoC values: 0.0364, 0.0341, 0.0000, 0.0000
+   → Gaps have DIFFERENT IoC signatures (possible multiple encryption methods)
+
+5. COMPARISON TO K1, K2, K3
+   K1 IoC: 0.037890
+   K2 IoC: 0.045279
+   K3 IoC: 0.066151
+   Gibberish IoC: 0.035730
+   → Gibberish is MORE encrypted than K1, K2, K3
+
+============================== FINAL ASSESSMENT ==============================
+
+The K4 gibberish is characterized as:
+- LOW ENTROPY/RANDOMNESS (IoC < 0.045)
+- HIGHLY RANDOM DISTRIBUTION (entropy > 90%)
+- STRONGLY DEVIATES FROM ENGLISH
+- HETEROGENEOUS GAPS (different encryption methods or padding)
+
+CONCLUSION:
+The gibberish appears RANDOM or STRONGLY ENCRYPTED
+  Likely scenario: True random data or very strong encryption
+  Possibility: Coordinates, metadata, or structured data encoded as gibberish
+  Action: Look for non-linguistic patterns (numbers, coordinates, dates)
