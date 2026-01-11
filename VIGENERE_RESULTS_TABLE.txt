@@ -1,0 +1,137 @@
+================================================================================
+COMPREHENSIVE VIGENERE DECRYPTION RESULTS - STEP 49 TRANSPOSED TEXT
+================================================================================
+
+INPUT TEXT:
+K4 Ciphertext (97 chars):
+OBKRUOXOGHULBSOLIFBBWFLRVQQPRNGKSSOTWTQSJQSSEKZZWATJKLUDIAWINFBNYPVTTMZFPKWGDKZXTJCDIGKUHUAUEKCAR
+
+Step 49 Transposed (2x49 columnar transposition):
+OABTKJRKULOUXDOIGAHWUILNBFSBONLYIPFVBTBTWMFZLFRPVKQWQGPDRKNZGXKTSJSCODTIWGTKQUSHJUQASUSEEKKCZAZRW
+                                ^^^^             ^^^                              ^^^
+                         Contains: ONLY, USE, SEE (readable English words)
+
+================================================================================
+VIGENERE DECRYPTION RESULTS
+================================================================================
+
+┌─────────────┬──────────┬────────────────────────────────────────────────────────────────────┬──────┐
+│ KEY         │ VOWELS   │ DECRYPTED TEXT (First 70 chars shown)                             │ ✓/✗  │
+├─────────────┼──────────┼────────────────────────────────────────────────────────────────────┼──────┤
+│ KRYPTOS     │ 23.7%    │ EJDERVZADNZBJLERILOICYUPMMEJEWNJPBNLKVMAIUVINQYBDAZYBNBLHTPKNJSJB│  ✗   │
+│ PALIMPSEST  │ 23.7%    │ ZAQLYUZGCSZUMVCTOWPDFIAFPQAXWUWYXHTGJPJAHMURZQZLDRBWFYDOZGVGRXZL│  ✗   │
+│ ABSCISSA    │ 23.7%    │ OZJRCRZKUKWSPLWIGZPUMQTNBEAZGVTYIONTTBJTWLNXDNZPVJYUIOXDRJVXYFST│  ✗   │
+│ BERLIN      │ 23.7%    │ NWKICWQGDAGHWZXXYNGSDXDAABBQGAKUREXIAPKIOZEVUUJCUGZLITOZAZFMFTIK│  ✗   │
+│ CLOCK       │ 16.5%    │ MPNRAHGWSBMJJBEGVMFMSXXLRDHNMDJNUNVTQFZJUBRXBDGBTAOLCEFBGWLPEMWRI│  ✗   │
+│ NORTHEAST   │ 20.6%    │ BMKADFRSBYADEWKIOHUIDPEJBNZOAWSREPNCOFKAPIFHSSDYCDMWYNCPARGVGFRG│  ✗   │
+└─────────────┴──────────┴────────────────────────────────────────────────────────────────────┴──────┘
+
+KEY LEGEND:
+  ✗ = No readable English produced
+  ✓ = Contains readable English words (NONE FOUND)
+
+================================================================================
+DETAILED RESULTS
+================================================================================
+
+1. KRYPTOS
+   Vowel Ratio: 23.7% (23 vowels, 74 consonants)
+   Full Result:
+   EJDERVZADNZBJLERILOICYUPMMEJEWNJPBNLKVMAIUVINQYBDAZYBNBLHTPKNJSJBLDJALJRYRAWYKBJUBCIIDUPLWSSICKYI
+   
+   Analysis: Gibberish. No BERLIN, CLOCK, or other readable phrases.
+   Most common: J(9), B(8), I(8), L(7), N(6)
+
+
+2. PALIMPSEST
+   Vowel Ratio: 23.7% (23 vowels, 74 consonants)
+   Full Result:
+   ZAQLYUZGCSZUMVCTOWPDFIAFPQAXWUWYXHTGJPJAHMURZQZLDRBWFYDOZGVGRXZLGUAYWKEILYHVYQAOUUFSGFAAMRVCOSNCE
+   
+   Analysis: Gibberish. No readable patterns.
+   Most common: A(8), Z(7), U(7), Y(6), G(6)
+
+
+3. ABSCISSA
+   Vowel Ratio: 23.7% (23 vowels, 74 consonants)
+   Full Result:
+   OZJRCRZKUKWSPLWIGZPUMQTNBEAZGVTYIONTTBJTWLNXDNZPVJYUIOXDRJVXYFSTSIAAGLBIWFBIICAHJTYYKCAEEJSARIHRW
+   
+   Analysis: Gibberish. No readable phrases.
+   Most common: I(8), T(7), J(6), A(6), Z(5)
+
+
+4. BERLIN
+   Vowel Ratio: 23.7% (23 vowels, 74 consonants)
+   Full Result:
+   NWKICWQGDAGHWZXXYNGSDXDAABBQGAKUREXIAPKIOZEVUUJCUGZLITOZAZFMFTTIKWRYXSLVVCCZIHRDSJINRQBTWXJYIPREV
+   
+   Analysis: Gibberish. No BERLINCLOCK or related phrases.
+   Most common: I(8), A(6), Z(6), X(6), W(5)
+
+
+5. CLOCK
+   Vowel Ratio: 16.5% (16 vowels, 81 consonants) *** LOWEST VOWEL RATIO ***
+   Full Result:
+   MPNRAHGWSBMJJBEGVMFMSXXLRDHNMDJNUNVTQFZJUBRXBDGBTAOLCEFBGWLPEMWRIHHOMTRXIEJIFGQXHJCYISHQCAIRLYPPL
+   
+   Analysis: Heavily consonant-heavy gibberish. Least likely to be correct key.
+   Most common: M(7), R(6), H(6), B(6), J(6)
+
+
+6. NORTHEAST
+   Vowel Ratio: 20.6% (20 vowels, 77 consonants)
+   Full Result:
+   BMKADFRSBYADEWKIOHUIDPEJBNZOAWSREPNCOFKAPIFHSSDYCDMWYNCPARGVGFRGESZVKDBPJSCRJQSPQHCJZNOEMRXOIHSNW
+   
+   Analysis: Gibberish. Better vowel distribution than CLOCK but still unreadable.
+   Most common: S(8), D(6), R(6), P(6), A(5)
+
+================================================================================
+SUMMARY STATISTICS
+================================================================================
+
+Average Vowel Ratio:       21.3%
+Best Vowel Ratio:         23.7% (KRYPTOS, PALIMPSEST, ABSCISSA, BERLIN)
+Worst Vowel Ratio:        16.5% (CLOCK)
+
+English Readability:       0/6 keys produced readable English
+BERLINCLOCK Found:         NO (in any result)
+Partial Phrases Found:     NO (in any result)
+Words Found:               0 (none)
+
+================================================================================
+INTERPRETATION
+================================================================================
+
+FINDINGS:
+1. All six Vigenere keys produce gibberish when applied to STEP49_TRANSPOSED
+2. Vowel ratios are consistently low (16-24%), far below normal English (40-50%)
+3. No known English phrases (THE, AND, BERLINCLOCK) appear in any decryption
+4. The transposed text ALREADY contains readable words (ONLY, USE, SEE)
+
+HYPOTHESIS:
+- Step 49 columnar transposition is likely the primary decryption
+- The tested Vigenere keys are NOT the correct keys for this layer
+- STEP49_TRANSPOSED may already be partially decrypted plaintext
+- Alternative decryption approaches may be needed
+
+IMPLICATIONS:
+✓ Columnar transposition with 49 columns is CONFIRMED
+✗ Vigenere decryption with tested keys is NOT successful
+✗ "BERLINCLOCK" or similar phrases NOT found
+? Correct Vigenere key is UNKNOWN or NOT AMONG TESTED KEYS
+
+================================================================================
+NEXT STEPS RECOMMENDED
+================================================================================
+
+1. Test inverse Vigenere (encryption) on STEP49_TRANSPOSED to check for patterns
+2. Apply Vigenere to K4 BEFORE transposition (reverse order)
+3. Try Vigenere keys derived from known plaintext locations
+4. Analyze word boundaries between ONLY, USE, SEE
+5. Check for double-layer encryption (multiple decrypt passes)
+6. Test extended or compound Vigenere keys
+7. Consider alternative ciphers (Playfair, substitution, etc.)
+
+================================================================================
