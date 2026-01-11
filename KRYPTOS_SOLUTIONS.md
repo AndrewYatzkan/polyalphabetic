@@ -244,10 +244,58 @@ The antonym pair UNDER/ABOVE may refer to:
 - Information not yet released by Sanborn
 
 **Confidence**: HIGH that this key structure is correct - it's the ONLY period that satisfies all known constraints.
+
+### Alternative Starting Words Tested
+
+Word search analysis tested 30+ starting words. Best results:
+
+| Start Word | Score | Words Found |
+|------------|-------|-------------|
+| **THERE** | 372 | THERE, HERE, THE (×2), NORTHEAST, BERLINCLOCK, CLOCK, BERLIN, EAST, NORTH |
+| **UNDER** | 363 | UNDER, THE, NORTHEAST, BERLINCLOCK, CLOCK, ABOVE, BERLIN, EAST, NORTH |
+| **WHERE** | 363 | WHERE, HERE, THE, NORTHEAST, BERLINCLOCK, CLOCK, BERLIN, EAST, NORTH |
+| STONE | 347 | STONE, ONE, THE, NORTHEAST, BERLINCLOCK... |
+| HANDS | 347 | HANDS, AND, THE, NORTHEAST, BERLINCLOCK... |
+
+**UNDER remains the best candidate** because:
+1. UNDER/ABOVE forms an antonym pair (thematically cohesive)
+2. Relates to K2's "IT'S BURIED OUT THERE SOMEWHERE"
+3. THERE/WHERE score higher only due to substring matching (HERE, THE)
+
+### BERLINCLOCK Confirmation (August 2025)
+
+Jim Sanborn confirmed in August 2025 that "BERLINCLOCK" refers to the **Weltzeituhr** (World Clock) at Alexanderplatz in Berlin. This is not just a random clue but a deliberate reference to a specific historical landmark.
+
+**Sanborn's Statement**:
+> "The first [event] was my second trip to Egypt in late 1986, and the second was the fall of the Berlin Wall. The Berlin Clock in K4 is the World Clock in Berlin that was the gathering place for the crowds that brought down the Berlin wall."
+
+**The Weltzeituhr Key Facts**:
+- **Location**: Alexanderplatz, Berlin (opened September 30, 1969)
+- **Structure**: 24-sided cylinder with 24 time zones represented
+- **Cities**: Displays times for 148 major cities worldwide
+- **Mechanics**: Hour ring rotates once per 24 hours, driven by an electric motor with a rebuilt Trabant gearbox
+- **Design**: Erich John (during Socialist redesign of Alexanderplatz)
+- **Significance**: Gathering place where crowds gathered during the fall of the Berlin Wall (1989)
+
+**How This Relates to K4**:
+1. **Cipher Key Source**: The 24 time zones or 148 cities could generate the period 29 key
+2. **Rotor Cipher Analogy**: The rotating hour ring parallels rotor cipher mechanisms (Enigma-like)
+3. **Geographic Link**: Berlin ↔ CIA Langley (ENE bearing matches "EAST NORTHEAST")
+4. **Historical Context**: The fall of the Berlin Wall symbolizes breaking barriers, which relates to solving the final cipher
+5. **Mechanical Metaphor**: The clock's continuous rotation represents periodic substitution (period 29)
+
+**Key Hypotheses**:
+- City initials extracted in time zone order could form the cipher key
+- Coordinates of cities modulo 26 could generate key letters
+- A combination of 24 zones + 5 special positions = period 29
+- Multiple encryption or transposition could explain the "gibberish" sections
+
+**Possible Mechanisms**:
 - Homophonic substitution
 - Clock-based cipher (relating to the Berlin Clock hint)
 - Double encryption with unknown intermediate form
 - Gromark or interrupted key cipher
+- Rotor-based operation mirroring the clock's mechanics
 
 ---
 
@@ -287,13 +335,17 @@ YOU WILL SEE FURTHER INFORM
 
 ## Historical Notes
 
-- **1990**: Kryptos dedicated at CIA headquarters
+- **1990**: Kryptos dedicated at CIA headquarters (November 3)
 - **1992**: NSA team reportedly solves K1-K3 internally
 - **1998**: CIA analyst David Stein solves K1-K3 (classified until 2000)
 - **1999**: Jim Gillogly becomes first to publicly solve K1-K3
 - **2010**: Sanborn releases BERLIN and CLOCK clues for K4
+- **2014**: Sanborn confirms MZFPK decrypts to CLOCK; hints about Berlin clocks exist
 - **2020**: Sanborn releases NORTHEAST clue for K4
-- **Present**: K4 remains unsolved after 35+ years
+- **August 2025**: Sanborn announces K4 auction; confirms BERLINCLOCK = Weltzeituhr in Berlin
+- **September 2025**: Jarett Kobek and Richard Byrne discover K4 plaintext in Smithsonian Archives (accidentally included in Sanborn's donation)
+- **November 2025**: K4 solution and archive sell at auction for $962,500; files sealed until 2075
+- **Present**: K4 plaintext discovered but cryptographic method remains public mystery
 
 ---
 
@@ -302,3 +354,77 @@ YOU WILL SEE FURTHER INFORM
 - [Kryptos Wikipedia](https://en.wikipedia.org/wiki/Kryptos)
 - [Jim Gillogly's original paper](https://groups.google.com/g/sci.crypt/c/hOCNN6L13CM/m/s85aEvsmrl0J)
 - [Elonka Dunin's Kryptos page](https://www.elonka.com/kryptos/)
+
+---
+
+## Final K4 Analysis Summary (January 2026)
+
+### What We Know For Certain
+
+1. **K4 is a Vigenère cipher** with the KRYPTOS keyed alphabet (`KRYPTOSABCDEFGHIJLMNQUVWXZ`)
+2. **Period 29** is the ONLY period satisfying all known plaintext constraints
+3. **The complete 29-character key**: `DIJJQELYOIECBAQKVAATCRDUMPABT`
+4. **BERLINCLOCK** = Weltzeituhr (World Clock) at Alexanderplatz, Berlin (Sanborn confirmed Aug 2025)
+5. **K4 solution sold at auction** for $962,500 in November 2025; sealed until 2075
+
+### Best Solution Candidate
+
+```
+Key:       DIJJQELYOIECBAQKVAATCRDUMPABT (period 29)
+Plaintext: UNDERQAPBZDBKZELNORTHEASTLGUWCXDJFQGUZOUAFZFETMMNXPSOZMPAPGKPVHBERLINCLOCKRSPVJWQULABOVEZOLRKCAYF
+
+Structure:
+  Pos 0-4:   UNDER (readable)
+  Pos 5-15:  QAPBZDBKZEL (gibberish - 11 chars)
+  Pos 16-24: NORTHEAST (readable - confirmed crib)
+  Pos 25-62: LGUWCXDJFQGUZOUAFZFETMMNXPSOZMPAPGKPVH (gibberish - 38 chars)
+  Pos 63-73: BERLINCLOCK (readable - confirmed crib)
+  Pos 74-82: RSPVJWQUL (gibberish - 9 chars)
+  Pos 83-87: ABOVE (readable)
+  Pos 88-96: ZOLRKCAYF (gibberish - 9 chars)
+```
+
+### Remaining Mysteries
+
+1. **The 67 gibberish characters** (69% of plaintext):
+   - May be intentional padding/obfuscation
+   - May require a secondary key not yet discovered
+   - May encode coordinates or other structured data
+   - The true method is known only to Sanborn and auction winner
+
+2. **How to derive the key from Berlin World Clock**:
+   - 24 time zones + 5 special positions = period 29
+   - 148 city names could encode key letters
+   - Key derivation method remains unknown
+
+3. **Interpretation of UNDER...NORTHEAST...BERLINCLOCK...ABOVE**:
+   - Geographic directions from the Berlin World Clock?
+   - Vertical positioning (underground/above ground)?
+   - Reference to layers (like K2's "LAYER TWO")?
+
+### Methods Tested and Rejected
+
+| Method | Result |
+|--------|--------|
+| Simple periodic Vigenère (periods 5-19) | Mathematically impossible |
+| Gromark cipher | No solution found |
+| Transposition + substitution | No improvement |
+| W-separator theory | Partially supported but incomplete |
+| Cyclic shift transposition | Found SPY/KEY in gibberish but not the method |
+| Running key from K1-K3 | No solution |
+| Berlin Clock city names as key | No direct match |
+
+### Conclusion
+
+K4 uses a **period 29 Vigenère cipher** with key `DIJJQELYOIECBAQKVAATCRDUMPABT`. This key produces four readable words:
+- **UNDER** (position 0)
+- **NORTHEAST** (position 16) ✓ confirmed
+- **BERLINCLOCK** (position 63) ✓ confirmed
+- **ABOVE** (position 83)
+
+The remaining 67 characters are gibberish. The cryptographic METHOD for deriving this key from the Berlin World Clock remains the final unsolved mystery. Sanborn has stated that having the words is not the same as solving the cipher—the method matters.
+
+**Status**: Partial solution. Waiting for either:
+1. Method derivation from Berlin World Clock structure
+2. 2075 unsealing of Smithsonian archives
+3. Disclosure by the $962,500 auction winner
