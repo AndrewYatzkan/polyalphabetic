@@ -1,0 +1,379 @@
+================================================================================
+                    COMPREHENSIVE STATISTICAL ANALYSIS OF K4                    
+================================================================================
+
+K4 Ciphertext: OBKRUOXOGHULBSOLIFBBWFLRVQQPRNGKSSOTWTQSJQSSEKZZWATJKLUDIAWINFBNYPVTTMZFPKWGDKZXTJCDIGKUHUAUEKCAR
+Length: 97 characters
+
+================================================================================
+                     1. INDEX OF COINCIDENCE (IoC) ANALYSIS                     
+================================================================================
+
+Full K4 IoC: 0.036082
+  Reference values:
+    English text:    ~0.067
+    Random cipher:   ~0.038
+    This result:     0.036082
+  Interpretation: RANDOM-LIKE (likely strongly encrypted or random)
+
+IoC by Column (arranged in 29-char rows)
+--------------------------------------------------------------------------------
+Arranging 97 chars in rows of 29...
+Col  0: ONWU                 | IoC: 0.000000
+Col  1: BGIH                 | IoC: 0.000000
+Col  2: KKNU                 | IoC: 0.166667
+Col  3: RSFA                 | IoC: 0.000000
+Col  4: USBU                 | IoC: 0.166667
+Col  5: OONE                 | IoC: 0.166667
+Col  6: XTYK                 | IoC: 0.000000
+Col  7: OWPC                 | IoC: 0.000000
+Col  8: GTVA                 | IoC: 0.000000
+Col  9: HQTR                 | IoC: 0.000000
+Col 10: UST                  | IoC: 0.000000
+Col 11: LJM                  | IoC: 0.000000
+Col 12: BQZ                  | IoC: 0.000000
+Col 13: SSF                  | IoC: 0.333333
+Col 14: OSP                  | IoC: 0.000000
+Col 15: LEK                  | IoC: 0.000000
+Col 16: IKW                  | IoC: 0.000000
+Col 17: FZG                  | IoC: 0.000000
+Col 18: BZD                  | IoC: 0.000000
+Col 19: BWK                  | IoC: 0.000000
+Col 20: WAZ                  | IoC: 0.000000
+Col 21: FTX                  | IoC: 0.000000
+Col 22: LJT                  | IoC: 0.000000
+Col 23: RKJ                  | IoC: 0.000000
+Col 24: VLC                  | IoC: 0.000000
+Col 25: QUD                  | IoC: 0.000000
+Col 26: QDI                  | IoC: 0.000000
+Col 27: PIG                  | IoC: 0.000000
+Col 28: RAK                  | IoC: 0.000000
+
+Average IoC across columns: 0.028736
+
+IoC Analysis for Other Period Lengths
+--------------------------------------------------------------------------------
+Period  3: Avg IoC = 0.029672, Avg Chi² =   280.82
+Period  4: Avg IoC = 0.032862, Avg Chi² =   306.14
+Period  5: Avg IoC = 0.039181, Avg Chi² =   210.43
+Period  6: Avg IoC = 0.030065, Avg Chi² =   234.67
+Period  7: Avg IoC = 0.041863, Avg Chi² =   189.59
+Period  8: Avg IoC = 0.026224, Avg Chi² =   274.69
+Period  9: Avg IoC = 0.025589, Avg Chi² =   168.31
+Period 11: Avg IoC = 0.044012, Avg Chi² =   183.93
+Period 13: Avg IoC = 0.022894, Avg Chi² =   190.13
+Period 16: Avg IoC = 0.037500, Avg Chi² =   223.58
+Period 19: Avg IoC = 0.028070, Avg Chi² =   167.41
+Period 23: Avg IoC = 0.015942, Avg Chi² =   183.74
+Period 29: Avg IoC = 0.028736, Avg Chi² =   178.20
+
+================================================================================
+                  2. KASISKI EXAMINATION (Repeated Sequences)                   
+================================================================================
+
+3-6 Character Repeats and Their Distances
+--------------------------------------------------------------------------------
+
+No repeating sequences found in specified length range.
+
+Repeated Bigrams and Their Distances
+--------------------------------------------------------------------------------
+
+'DI' at positions [55, 83], distances: [28]
+  GCD: 28
+
+'EK' at positions [44, 92], distances: [48]
+  GCD: 48
+
+'FB' at positions [17, 61], distances: [44]
+  GCD: 44
+
+'GK' at positions [30, 85], distances: [55]
+  GCD: 55
+
+'HU' at positions [9, 88], distances: [79]
+  GCD: 79
+
+'KZ' at positions [45, 77], distances: [32]
+  GCD: 32
+
+'QS' at positions [38, 41], distances: [3]
+  GCD: 3
+
+'SO' at positions [13, 33], distances: [20]
+  GCD: 20
+
+'SS' at positions [32, 42], distances: [10]
+  GCD: 10
+
+'TJ' at positions [50, 80], distances: [30]
+  GCD: 30
+
+Bigram GCD Analysis
+--------------------------------------------------------------------------------
+Most common GCDs from bigrams: [(28, 1), (48, 1), (44, 1), (55, 1), (79, 1), (32, 1), (3, 1), (20, 1), (10, 1), (30, 1)]
+
+================================================================================
+                3. CHI-SQUARED TEST AGAINST ENGLISH FREQUENCIES                 
+================================================================================
+
+K4 Chi-squared: 571.03 (df = 25)
+  Note: Lower values indicate closer match to English
+        Higher values indicate deviation from English
+
+BERLINCLOCK Chi-squared: 35.07
+
+Chi-squared Critical Values (α=0.05):
+  df=25: ~37.65
+  K4 at 571.03: Deviates significantly
+
+Chi-squared by Column (period 29)
+--------------------------------------------------------------------------------
+Col  0: Chi² =    22.69
+Col  1: Chi² =    32.85
+Col  2: Chi² =   138.30
+Col  3: Chi² =    18.41
+Col  4: Chi² =    52.97
+Col  5: Chi² =    14.99
+Col  6: Chi² =   210.48
+Col  7: Chi² =    31.87
+Col  8: Chi² =    39.79
+Col  9: Chi² =   270.20
+Col 10: Chi² =    18.04
+Col 11: Chi² =   237.00
+Col 12: Chi² =   820.67
+Col 13: Chi² =    33.03
+Col 14: Chi² =    23.99
+Col 15: Chi² =    51.08
+Col 16: Chi² =    59.09
+Col 17: Chi² =   478.95
+Col 18: Chi² =   477.63
+Col 19: Chi² =    76.64
+Col 20: Chi² =   465.66
+Col 21: Chi² =   237.86
+Col 22: Chi² =   226.83
+Col 23: Chi² =   263.61
+Col 24: Chi² =    51.35
+Col 25: Chi² =   367.80
+Col 26: Chi² =   360.50
+Col 27: Chi² =    35.61
+Col 28: Chi² =    49.83
+
+Average Chi-squared across columns: 178.20
+
+================================================================================
+                          4. LETTER FREQUENCY ANALYSIS                          
+================================================================================
+
+Letter Frequencies in K4:
+Letter     Count    %          Expected   Diff      
+--------------------------------------------------
+A          4          4.12%    8.17%     -4.04%
+B          5          5.15%    1.49%     +3.66%
+C          2          2.06%    2.78%     -0.72%
+D          3          3.09%    4.25%     -1.16%
+E          2          2.06%   12.70%    -10.64%
+F          4          4.12%    2.23%     +1.90%
+G          4          4.12%    2.02%     +2.11%
+H          2          2.06%    6.09%     -4.03%
+I          4          4.12%    6.97%     -2.84%
+J          3          3.09%    0.15%     +2.94%
+K          8          8.25%    0.77%     +7.48%
+L          4          4.12%    4.03%     +0.10%
+M          1          1.03%    2.41%     -1.38%
+N          3          3.09%    6.75%     -3.66%
+O          5          5.15%    7.51%     -2.35%
+P          3          3.09%    1.93%     +1.16%
+Q          4          4.12%    0.10%     +4.03%
+R          4          4.12%    5.99%     -1.86%
+S          6          6.19%    6.33%     -0.14%
+T          6          6.19%    9.06%     -2.87%
+U          6          6.19%    2.76%     +3.43%
+V          2          2.06%    0.98%     +1.08%
+W          5          5.15%    2.36%     +2.79%
+X          2          2.06%    0.15%     +1.91%
+Y          1          1.03%    1.97%     -0.94%
+Z          4          4.12%    0.07%     +4.05%
+
+Most frequent letters: [('K', 8), ('U', 6), ('S', 6), ('T', 6), ('O', 5), ('B', 5), ('W', 5), ('R', 4), ('G', 4), ('L', 4)]
+Least frequent letters: [('V', 2), ('E', 2), ('C', 2), ('Y', 1), ('M', 1)]
+
+================================================================================
+                         5. BIGRAM AND TRIGRAM ANALYSIS                         
+================================================================================
+
+Top 20 Bigrams
+--------------------------------------------------------------------------------
+HU: 2
+SO: 2
+FB: 2
+GK: 2
+SS: 2
+QS: 2
+EK: 2
+KZ: 2
+TJ: 2
+DI: 2
+OB: 1
+BK: 1
+KR: 1
+RU: 1
+UO: 1
+OX: 1
+XO: 1
+OG: 1
+GH: 1
+UL: 1
+
+Top 15 Trigrams
+--------------------------------------------------------------------------------
+OBK: 1
+BKR: 1
+KRU: 1
+RUO: 1
+UOX: 1
+OXO: 1
+XOG: 1
+OGH: 1
+GHU: 1
+HUL: 1
+ULB: 1
+LBS: 1
+BSO: 1
+SOL: 1
+OLI: 1
+
+================================================================================
+                          6. LETTER CONTACT FREQUENCY                           
+================================================================================
+
+Most Common Letter Transitions
+--------------------------------------------------------------------------------
+K→Z: 2
+G→K: 2
+H→U: 2
+S→O: 2
+S→S: 2
+F→B: 2
+Q→S: 2
+T→J: 2
+E→K: 2
+D→I: 2
+O→B: 1
+O→X: 1
+O→G: 1
+O→L: 1
+O→T: 1
+B→K: 1
+B→S: 1
+B→B: 1
+B→W: 1
+B→N: 1
+
+================================================================================
+                           7. DOUBLED LETTER ANALYSIS                           
+================================================================================
+
+Doubled letters in K4:
+  SS: 2 times
+  BB: 1 times
+  QQ: 1 times
+  ZZ: 1 times
+  TT: 1 times
+
+Total doubled letters: 6
+Percentage: 6.25%
+
+================================================================================
+                   8. GIBBERISH SECTIONS (SEPARATE ANALYSIS)                    
+================================================================================
+
+Section 1 (UNDER→NORTHEAST)
+  Text: QAPBZDBKZEL
+  Length: 11
+  IoC: 0.036364 (random-like)
+  Chi²: 623.18
+  Letters: 9 unique
+  Frequency: {'B': 2, 'Z': 2, 'Q': 1, 'A': 1, 'P': 1, 'D': 1, 'K': 1, 'E': 1, 'L': 1}
+
+Section 2 (NORTHEAST→BERLINCLOCK)
+  Text: LGUWCXDJFQGUZOUAFZFETMMNXPSOZ
+  Length: 29
+  IoC: 0.032020 (random-like)
+  Chi²: 589.06
+  Letters: 19 unique
+  Frequency: {'U': 3, 'F': 3, 'Z': 3, 'G': 2, 'X': 2, 'O': 2, 'M': 2, 'L': 1, 'W': 1, 'C': 1, 'D': 1, 'J': 1, 'Q': 1, 'A': 1, 'E': 1, 'T': 1, 'N': 1, 'P': 1, 'S': 1}
+
+Section 3 (middle)
+  Text: MPAPGKPVH
+  Length: 9
+  IoC: 0.083333 (English-like)
+  Chi²: 81.91
+  Letters: 7 unique
+  Frequency: {'P': 3, 'M': 1, 'A': 1, 'G': 1, 'K': 1, 'V': 1, 'H': 1}
+
+Section 4 (BERLINCLOCK→ABOVE)
+  Text: RSPVJWQUL
+  Length: 9
+  IoC: 0.000000 (random-like)
+  Chi²: 212.81
+  Letters: 9 unique
+  Frequency: {'R': 1, 'S': 1, 'P': 1, 'V': 1, 'J': 1, 'W': 1, 'Q': 1, 'U': 1, 'L': 1}
+
+Section 5 (final)
+  Text: ZOLRKCAYF
+  Length: 9
+  IoC: 0.000000 (random-like)
+  Chi²: 177.61
+  Letters: 9 unique
+  Frequency: {'Z': 1, 'O': 1, 'L': 1, 'R': 1, 'K': 1, 'C': 1, 'A': 1, 'Y': 1, 'F': 1}
+
+================================================================================
+                   9. STATISTICAL SUMMARY AND INTERPRETATION                    
+================================================================================
+
+KEY FINDINGS:
+
+1. INDEX OF COINCIDENCE:
+   - Full K4 IoC: 0.036082
+   - Classification: RANDOM-LIKE (likely strongly encrypted or random)
+   - Interpretation: The low IoC suggests K4 is heavily encrypted or
+     random data, not plaintext English
+
+2. PERIOD ANALYSIS:
+   - Period 29 shows average IoC of 0.028736
+   - Significant variation by column
+
+3. KASISKI EXAMINATION:
+   - Found 0 repeated sequences
+   - Most common GCDs from repeat distances suggest possible key lengths
+   - No definitive period length detected from repeats
+
+4. CHI-SQUARED TEST:
+   - K4 Chi²: 571.03
+   - Deviation from English: Significant
+   - Confirms K4 is not standard English text
+
+5. LETTER DISTRIBUTION:
+   - Most frequent: K (appears 8 times)
+   - Least frequent: M
+   - Distribution is relatively non-uniform
+
+6. BIGRAM/TRIGRAM ANALYSIS:
+   - Most common bigram: HU (2 times)
+   - 86 unique bigrams found
+   - Pattern suggests weak repetition
+
+7. DOUBLED LETTERS:
+   - Total doubled letters: 6
+   - Doubled percentage: 6.25%
+   - More than typical English (~3%)
+
+CONCLUSION:
+K4 exhibits characteristics of a polyalphabetic cipher with:
+- Low IoC (~0.0361) indicating multiple encryption layers
+- Chi-squared deviation confirming non-English distribution
+- Possible Vigenere or Playfair cipher
+- The gibberish sections have varying IoC values, suggesting different
+  encryption methods or truly random padding
+
