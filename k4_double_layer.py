@@ -1,1081 +1,1300 @@
 #!/usr/bin/env python3
 """
-K4 Double Layer Encryption Analysis
+K4 Double-Layer Cipher Hypothesis Tester
+=========================================
+Tests whether K4 uses TWO layers of encryption:
+  Layer 1: Vigenere with period 29 and KRYPTOS alphabet
+  Layer 2: One of several classical ciphers
 
-Hypothesis: The partial decryption with Period 29 key shows readable words
-mixed with gibberish. The gibberish might be encrypted with an additional layer.
+Known:
+  - Vigenere key (partial): OYNKYELYOIECBAQK?????RDUMRIYW
+  - Best guess for unknowns: BQTNN -> full key OYNKYELYOIECBAQKBQTNNRDUMRIYW
+  - Positions 21-33 decrypt to EASTNORTHEAST
+  - Positions 63-73 decrypt to BERLINCLOCK
+  - Other positions produce gibberish => suggests a second layer
 
-Current decryption:
-UDAYUQAPBZDBKZELNORTHEASTLGUWCIAASQGUZOUAFZFETMMNXPSOZMPAPGLKGBBERLINCLOCKRSPVJWQULABOVEJYBUKCAYF
+Hypotheses tested:
+  1. Vig-29 then Simple Substitution
+  2. Vig-29 then Columnar Transposition (widths 7-14)
+  3. Vig-29 then Route Cipher (spiral, zigzag, diagonal)
+  4. Vig-29 then Rail Fence (2-10 rails)
+  5. Vig-29 then Skip/Decimation (all N coprime to 97)
 
-Readable sections: DAY, NORTHEAST, CIA, KGB, BERLINCLOCK, ABOVE
-Gibberish sections: U, UQAPBZDBKZEL, LGU, ASQGUZOUAFZFETMMNXPSOZMPAPGL, RSPVJWQUL, JYBUKCAYF
+Each uses simulated annealing with 500,000 iterations.
+Scoring: quadgram log-probability + bonus for known crib words.
 """
 
-import string
-from itertools import product
+import math
+import random
+import time
+import sys
+from itertools import permutations
 
-# The K4 ciphertext
+# ============================================================
+# CONSTANTS
+# ============================================================
+
 K4 = "OBKRUOXOGHULBSOLIFBBWFLRVQQPRNGKSSOTWTQSJQSSEKZZWATJKLUDIAWINFBNYPVTTMZFPKWGDKZXTJCDIGKUHUAUEKCAR"
-
-# The current best decryption with Period 29
-DECRYPTED = "UDAYUQAPBZDBKZELNORTHEASTLGUWCIAASQGUZOUAFZFETMMNXPSOZMPAPGLKGBBERLINCLOCKRSPVJWQULABOVEJYBUKCAYF"
-
-# Known readable words and their positions
-READABLE_WORDS = {
-    "DAY": (1, 4),        # positions 1-3 (0-indexed)
-    "NORTHEAST": (17, 26),
-    "CIA": (30, 33),
-    "KGB": (63, 66),
-    "BERLINCLOCK": (66, 77),
-    "ABOVE": (82, 87),
-}
-
-# KRYPTOS tableau (used in K1-K3)
-KRYPTOS_ALPHABET = "KRYPTOSABCDEFGHIJLMNQUVWXZ"  # Missing letters filled
-STANDARD_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-def identify_gibberish_sections(decrypted, words_info):
-    """Identify which parts are gibberish vs readable."""
-    # Mark positions that are part of readable words
-    readable_mask = [False] * len(decrypted)
-
-    for word, (start, end) in words_info.items():
-        for i in range(start, end):
-            if i < len(readable_mask):
-                readable_mask[i] = True
-
-    # Extract gibberish sections
-    gibberish_sections = []
-    current_section = ""
-    current_start = None
-
-    for i, (char, is_readable) in enumerate(zip(decrypted, readable_mask)):
-        if not is_readable:
-            if current_start is None:
-                current_start = i
-            current_section += char
-        else:
-            if current_section:
-                gibberish_sections.append((current_start, current_section))
-                current_section = ""
-                current_start = None
-
-    if current_section:
-        gibberish_sections.append((current_start, current_section))
-
-    return gibberish_sections, readable_mask
-
-def caesar_decrypt(text, shift):
-    """Decrypt using Caesar cipher with given shift."""
-    result = ""
-    for c in text:
-        if c in string.ascii_uppercase:
-            result += chr((ord(c) - ord('A') - shift) % 26 + ord('A'))
-        else:
-            result += c
-    return result
-
-def atbash_decrypt(text):
-    """Decrypt using Atbash cipher (A<->Z, B<->Y, etc.)."""
-    result = ""
-    for c in text:
-        if c in string.ascii_uppercase:
-            result += chr(ord('Z') - (ord(c) - ord('A')))
-        else:
-            result += c
-    return result
-
-def rot13_decrypt(text):
-    """Decrypt using ROT13."""
-    return caesar_decrypt(text, 13)
-
-def kryptos_substitution(text, reverse=False):
-    """Apply KRYPTOS alphabet substitution."""
-    if reverse:
-        mapping = dict(zip(KRYPTOS_ALPHABET, STANDARD_ALPHABET))
-    else:
-        mapping = dict(zip(STANDARD_ALPHABET, KRYPTOS_ALPHABET))
-    return "".join(mapping.get(c, c) for c in text)
-
-def vigenere_decrypt(text, key):
-    """Decrypt using Vigenere cipher."""
-    result = ""
-    key_len = len(key)
-    for i, c in enumerate(text):
-        if c in string.ascii_uppercase:
-            shift = ord(key[i % key_len]) - ord('A')
-            result += chr((ord(c) - ord('A') - shift) % 26 + ord('A'))
-        else:
-            result += c
-    return result
-
-def is_promising_text(text, min_word_len=3):
-    """Check if text contains English-like patterns."""
-    # Common English words to look for
-    common_words = [
-        "THE", "AND", "FOR", "ARE", "BUT", "NOT", "YOU", "ALL", "CAN", "HAD",
-        "HER", "WAS", "ONE", "OUR", "OUT", "DAY", "GET", "HAS", "HIM", "HIS",
-        "HOW", "MAN", "NEW", "NOW", "OLD", "SEE", "WAY", "WHO", "BOY", "DID",
-        "ITS", "LET", "PUT", "SAY", "SHE", "TOO", "USE", "LAYER", "CLOCK",
-        "EAST", "WEST", "NORTH", "SOUTH", "SECRET", "CODE", "KEY", "CIPHER",
-        "HIDDEN", "BELOW", "ABOVE", "UNDER", "OVER", "BERLIN", "CIA", "KGB",
-        "SPY", "AGENT", "TIME", "PLACE", "SLOWLY", "DESPER", "ATELY", "SHADOW"
-    ]
-
-    text_upper = text.upper()
-    found_words = []
-    for word in common_words:
-        if word in text_upper:
-            found_words.append(word)
-
-    return found_words
-
-def analyze_gibberish_with_caesar(gibberish):
-    """Try all Caesar shifts on gibberish."""
-    print("\n=== CAESAR CIPHER ANALYSIS ===")
-    for shift in range(1, 26):
-        decrypted = caesar_decrypt(gibberish, shift)
-        words = is_promising_text(decrypted)
-        if words:
-            print(f"Shift {shift:2d}: {decrypted} -> Found: {words}")
-
-    # Also show all shifts for manual inspection
-    print("\nAll Caesar shifts:")
-    for shift in range(1, 26):
-        decrypted = caesar_decrypt(gibberish, shift)
-        print(f"  {shift:2d}: {decrypted}")
-
-def analyze_gibberish_with_atbash(gibberish):
-    """Try Atbash on gibberish."""
-    print("\n=== ATBASH CIPHER ANALYSIS ===")
-    decrypted = atbash_decrypt(gibberish)
-    words = is_promising_text(decrypted)
-    print(f"Atbash: {decrypted}")
-    if words:
-        print(f"  Found words: {words}")
-
-def analyze_gibberish_with_vigenere(gibberish, max_key_len=3):
-    """Try short Vigenere keys on gibberish."""
-    print(f"\n=== VIGENERE CIPHER ANALYSIS (keys up to length {max_key_len}) ===")
-
-    promising_results = []
-
-    for key_len in range(1, max_key_len + 1):
-        for key_tuple in product(string.ascii_uppercase, repeat=key_len):
-            key = "".join(key_tuple)
-            decrypted = vigenere_decrypt(gibberish, key)
-            words = is_promising_text(decrypted)
-            if words:
-                promising_results.append((key, decrypted, words))
-
-    if promising_results:
-        print("Promising results:")
-        for key, decrypted, words in promising_results[:20]:  # Limit output
-            print(f"  Key '{key}': {decrypted} -> Found: {words}")
-    else:
-        print("No promising results found with short keys.")
-
-def analyze_with_readable_words_as_keys(gibberish):
-    """Use the readable words from the decryption as Vigenere keys."""
-    print("\n=== USING READABLE WORDS AS KEYS ===")
-
-    readable_keys = ["DAY", "NORTHEAST", "CIA", "KGB", "BERLINCLOCK", "ABOVE",
-                     "CLOCK", "BERLIN", "EAST", "NORTH"]
-
-    for key in readable_keys:
-        decrypted = vigenere_decrypt(gibberish, key)
-        words = is_promising_text(decrypted)
-        print(f"Key '{key}': {decrypted}")
-        if words:
-            print(f"  Found words: {words}")
-
-def analyze_kryptos_substitution(gibberish):
-    """Try KRYPTOS alphabet substitution."""
-    print("\n=== KRYPTOS ALPHABET SUBSTITUTION ===")
-
-    forward = kryptos_substitution(gibberish, reverse=False)
-    reverse = kryptos_substitution(gibberish, reverse=True)
-
-    print(f"Standard -> KRYPTOS: {forward}")
-    words = is_promising_text(forward)
-    if words:
-        print(f"  Found words: {words}")
-
-    print(f"KRYPTOS -> Standard: {reverse}")
-    words = is_promising_text(reverse)
-    if words:
-        print(f"  Found words: {words}")
-
-def try_double_layer_full_text():
-    """Try decrypting the full gibberish-combined text."""
-    print("\n" + "="*60)
-    print("FULL TEXT DOUBLE LAYER ANALYSIS")
-    print("="*60)
-
-    gibberish_sections, _ = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    # Combine all gibberish
-    full_gibberish = "".join(section for _, section in gibberish_sections)
-    print(f"\nCombined gibberish ({len(full_gibberish)} chars): {full_gibberish}")
-
-    analyze_gibberish_with_caesar(full_gibberish)
-    analyze_gibberish_with_atbash(full_gibberish)
-    analyze_with_readable_words_as_keys(full_gibberish)
-    analyze_kryptos_substitution(full_gibberish)
-
-def try_per_section_analysis():
-    """Analyze each gibberish section separately."""
-    print("\n" + "="*60)
-    print("PER-SECTION ANALYSIS")
-    print("="*60)
-
-    gibberish_sections, _ = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    for i, (start, section) in enumerate(gibberish_sections):
-        if len(section) >= 3:  # Only analyze sections with 3+ chars
-            print(f"\n--- Section {i+1}: '{section}' (position {start}, length {len(section)}) ---")
-            analyze_gibberish_with_caesar(section)
-            analyze_gibberish_with_atbash(section)
-
-def analyze_alternating_pattern():
-    """Check if there's an alternating pattern in the decryption."""
-    print("\n" + "="*60)
-    print("ALTERNATING PATTERN ANALYSIS")
-    print("="*60)
-
-    # Extract every other character
-    even_chars = DECRYPTED[::2]
-    odd_chars = DECRYPTED[1::2]
-
-    print(f"\nEven positions: {even_chars}")
-    print(f"Odd positions: {odd_chars}")
-
-    # Check for words in each
-    print(f"\nWords in even positions: {is_promising_text(even_chars)}")
-    print(f"Words in odd positions: {is_promising_text(odd_chars)}")
-
-    # Try decrypting each with Caesar
-    print("\nCaesar on even positions:")
-    for shift in range(1, 26):
-        dec = caesar_decrypt(even_chars, shift)
-        words = is_promising_text(dec)
-        if words:
-            print(f"  Shift {shift}: {dec} -> {words}")
-
-    print("\nCaesar on odd positions:")
-    for shift in range(1, 26):
-        dec = caesar_decrypt(odd_chars, shift)
-        words = is_promising_text(dec)
-        if words:
-            print(f"  Shift {shift}: {dec} -> {words}")
-
-def selective_decryption():
-    """Try decrypting only specific positions based on patterns."""
-    print("\n" + "="*60)
-    print("SELECTIVE POSITION ANALYSIS")
-    print("="*60)
-
-    _, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    # Get only gibberish positions from original K4
-    gibberish_from_k4 = ""
-    for i, is_readable in enumerate(readable_mask):
-        if not is_readable and i < len(K4):
-            gibberish_from_k4 += K4[i]
-
-    print(f"\nOriginal K4 at gibberish positions: {gibberish_from_k4}")
-
-    # Try different approaches on this
-    print("\nTrying different single-key Vigenere on K4 gibberish positions:")
-    for key in ["KRYPTOS", "PALIMPSEST", "ABSCISSA", "SHADOW", "CLOCK", "BERLIN"]:
-        decrypted = vigenere_decrypt(gibberish_from_k4, key)
-        words = is_promising_text(decrypted)
-        print(f"  Key '{key}': {decrypted}")
-        if words:
-            print(f"    Found: {words}")
-
-def try_known_kryptos_keys():
-    """Try keys from other Kryptos sections."""
-    print("\n" + "="*60)
-    print("TRYING KNOWN KRYPTOS KEYS ON GIBBERISH")
-    print("="*60)
-
-    gibberish_sections, _ = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-    full_gibberish = "".join(section for _, section in gibberish_sections)
-
-    known_keys = [
-        "PALIMPSEST",  # K1 key
-        "ABSCISSA",    # K2 key
-        "KRYPTOS",     # The sculpture name
-        "SHADOW",      # From clue
-        "CLOCK",       # From Berlin Clock reference
-        "NORTHEAST",   # From the readable text
-        "BERLINCLOCK", # From the readable text
-        "DXNZKELYOIECBAQKVAATCRDUMPABT",  # The Period 29 key
-    ]
-
-    for key in known_keys:
-        decrypted = vigenere_decrypt(full_gibberish, key)
-        words = is_promising_text(decrypted)
-        print(f"Key '{key}': {decrypted}")
-        if words:
-            print(f"  Found: {words}")
-
-def check_position_based_patterns():
-    """Check if gibberish follows position-based patterns."""
-    print("\n" + "="*60)
-    print("POSITION-BASED PATTERN ANALYSIS")
-    print("="*60)
-
-    gibberish_sections, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    print("\nDecryption with position markers:")
-    marked = ""
-    for i, (char, is_readable) in enumerate(zip(DECRYPTED, readable_mask)):
-        if is_readable:
-            marked += char
-        else:
-            marked += f"[{char}]"
-    print(marked)
-
-    # Check if gibberish positions follow a mathematical pattern
-    gibberish_positions = [i for i, r in enumerate(readable_mask) if not r]
-    print(f"\nGibberish positions: {gibberish_positions}")
-
-    # Check differences between positions
-    if len(gibberish_positions) > 1:
-        diffs = [gibberish_positions[i+1] - gibberish_positions[i]
-                 for i in range(len(gibberish_positions)-1)]
-        print(f"Position differences: {diffs[:30]}...")
-
-def main():
-    print("K4 Double Layer Encryption Analysis")
-    print("="*60)
-    print(f"\nK4 ciphertext ({len(K4)} chars):")
-    print(K4)
-    print(f"\nCurrent decryption ({len(DECRYPTED)} chars):")
-    print(DECRYPTED)
-
-    # Identify sections
-    gibberish_sections, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    print("\n" + "="*60)
-    print("SECTION IDENTIFICATION")
-    print("="*60)
-    print("\nReadable words found:")
-    for word, (start, end) in sorted(READABLE_WORDS.items(), key=lambda x: x[1][0]):
-        print(f"  Position {start:2d}-{end:2d}: {word}")
-
-    print("\nGibberish sections:")
-    for start, section in gibberish_sections:
-        print(f"  Position {start:2d}: '{section}' (length {len(section)})")
-
-    # Run all analyses
-    try_double_layer_full_text()
-    try_per_section_analysis()
-    analyze_alternating_pattern()
-    selective_decryption()
-    try_known_kryptos_keys()
-    check_position_based_patterns()
-
-    # Additional: Try Vigenere with 2-letter keys on combined gibberish
-    print("\n" + "="*60)
-    print("VIGENERE WITH 2-LETTER KEYS ON COMBINED GIBBERISH")
-    print("="*60)
-    full_gibberish = "".join(section for _, section in gibberish_sections)
-    analyze_gibberish_with_vigenere(full_gibberish, max_key_len=2)
-
-    print("\n" + "="*60)
-    print("ANALYSIS COMPLETE")
-    print("="*60)
-
-def deep_dive_promising_keys():
-    """Deeper analysis of the promising keys found."""
-    print("\n" + "="*60)
-    print("DEEP DIVE: PROMISING VIGENERE KEYS")
-    print("="*60)
-
-    gibberish_sections, _ = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-    full_gibberish = "".join(section for _, section in gibberish_sections)
-
-    # Keys that showed promise
-    promising_keys = ["BC", "BT", "CR", "AC", "AG", "AI", "AV", "BN", "BR", "CH", "EB"]
-
-    for key in promising_keys:
-        decrypted = vigenere_decrypt(full_gibberish, key)
-        words = is_promising_text(decrypted)
-        print(f"\nKey '{key}': {decrypted}")
-        print(f"  Words found: {words}")
-        # Show positions of found words
-        for word in words:
-            pos = decrypted.find(word)
-            print(f"    '{word}' at position {pos}")
-
-
-def reconstruct_with_double_layer():
-    """Try to reconstruct the full message assuming double-layer encryption."""
-    print("\n" + "="*60)
-    print("RECONSTRUCT FULL MESSAGE WITH DOUBLE LAYER")
-    print("="*60)
-
-    _, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    # Try applying Caesar shifts only to gibberish positions
-    print("\nApplying Caesar shifts ONLY to gibberish positions:")
-    for shift in range(1, 26):
-        result = ""
-        for i, (char, is_readable) in enumerate(zip(DECRYPTED, readable_mask)):
-            if is_readable:
-                result += char  # Keep readable parts
+KRYPTOS = "KRYPTOSABCDEFGHIJLMNQUVWXZ"
+N = len(K4)  # 97
+
+# Partial key: positions 16-20 are unknown
+KNOWN_KEY = list("OYNKYELYOIECBAQK?????RDUMRIYW")
+UNKNOWN_POS = [16, 17, 18, 19, 20]
+
+# Best-guess full key (from prior analysis)
+BEST_GUESS_KEY = "OYNKYELYOIECBAQKBQTNNRDUMRIYW"
+
+# ============================================================
+# KRYPTOS ALPHABET UTILITIES
+# ============================================================
+
+_K2I = {c: i for i, c in enumerate(KRYPTOS)}
+
+def k_idx(c):
+    return _K2I[c]
+
+def k_chr(i):
+    return KRYPTOS[i % 26]
+
+# ============================================================
+# QUADGRAM SCORER
+# ============================================================
+
+print("Loading quadgrams...")
+QG_LOG = {}
+_total = 0
+with open("/home/user/polyalphabetic/english_quadgrams.txt") as f:
+    for line in f:
+        parts = line.strip().split()
+        if len(parts) == 2:
+            gram, count = parts[0], int(parts[1])
+            _total += count
+            QG_LOG[gram] = count
+
+# Convert to log probabilities
+for gram in QG_LOG:
+    QG_LOG[gram] = math.log10(QG_LOG[gram] / _total)
+QG_FLOOR = math.log10(0.01 / _total)
+
+def qscore(text):
+    """Quadgram log-probability score."""
+    s = 0.0
+    for i in range(len(text) - 3):
+        q = text[i:i+4]
+        s += QG_LOG.get(q, QG_FLOOR)
+    return s
+
+# ============================================================
+# CRIB WORDS AND BONUS SCORING
+# ============================================================
+
+CRIB_WORDS = [
+    "EASTNORTHEAST", "BERLINCLOCK", "NORTHEAST", "BERLIN", "CLOCK",
+    "SLOWLY", "DESPERATELY", "SHADOW", "LAYER", "UNDERGROUND",
+    "BURIED", "HIDDEN", "SECRET", "DEGREE", "BETWEEN",
+    "COMPASS", "BEARING", "LANGLEY", "ITWAS", "TOTALLY",
+    "INVISIBLE", "HOWSTHAT", "POSSIBLE", "THEYD", "USED",
+    "EARTHS", "MAGNETIC", "FIELD", "INFORMATION", "GATHERED",
+    "DIGETAL", "INTERPRETED",
+]
+
+def word_bonus(text):
+    """Large bonus for crib words found anywhere in text."""
+    bonus = 0
+    for w in CRIB_WORDS:
+        if w in text:
+            bonus += len(w) * 8  # strong bonus per character
+    return bonus
+
+def found_words(text):
+    """Return list of crib words found in text."""
+    return [w for w in CRIB_WORDS if w in text]
+
+# ============================================================
+# VIGENERE DECRYPT (KRYPTOS ALPHABET)
+# ============================================================
+
+def vig_decrypt(ct, key):
+    """Decrypt ciphertext with Vigenere using KRYPTOS alphabet."""
+    pt = []
+    klen = len(key)
+    for i, c in enumerate(ct):
+        ci = k_idx(c)
+        ki = k_idx(key[i % klen])
+        pt.append(k_chr((ci - ki) % 26))
+    return ''.join(pt)
+
+# ============================================================
+# KEY BUILDING
+# ============================================================
+
+def make_key(unknowns):
+    """Build full 29-char key from 5 unknown indices (0-25 each)."""
+    key = list(KNOWN_KEY)
+    for i, v in enumerate(unknowns):
+        key[UNKNOWN_POS[i]] = KRYPTOS[v % 26]
+    return ''.join(key)
+
+def get_unknowns_from_key(key_str):
+    """Extract the 5 unknown values from a key string."""
+    return [k_idx(key_str[p]) for p in UNKNOWN_POS]
+
+# ============================================================
+# RESULT TRACKING
+# ============================================================
+
+class TopResults:
+    """Track the top N results for a given hypothesis."""
+    def __init__(self, n=5):
+        self.n = n
+        self.results = []  # list of (score, info_dict)
+
+    def add(self, score, info):
+        self.results.append((score, info))
+        self.results.sort(key=lambda x: -x[0])
+        self.results = self.results[:self.n]
+
+    def best_score(self):
+        return self.results[0][0] if self.results else -999999
+
+    def print_results(self, label):
+        print(f"\n{'='*80}")
+        print(f"  TOP 5 RESULTS: {label}")
+        print(f"{'='*80}")
+        for rank, (score, info) in enumerate(self.results, 1):
+            highlight = " <<<< HIGH SCORE" if score > -500 else ""
+            print(f"\n  #{rank}  Score: {score:.2f}{highlight}")
+            for k, v in info.items():
+                print(f"       {k}: {v}")
+            # Check for words
+            if 'plaintext' in info:
+                wds = found_words(info['plaintext'])
+                if wds:
+                    print(f"       *** CRIB WORDS FOUND: {wds} ***")
+        print()
+
+# ============================================================
+# HYPOTHESIS 1: VIGENERE-29 then SIMPLE SUBSTITUTION
+# ============================================================
+
+def test_vig_then_substitution(iterations=500000):
+    """
+    Decrypt with Vig-29, then apply a monoalphabetic substitution.
+    SA optimizes the substitution table + the 5 unknown key positions.
+    """
+    print("\n" + "#"*80)
+    print("# HYPOTHESIS 1: VIGENERE-29 then SIMPLE SUBSTITUTION")
+    print("#"*80)
+    print(f"  Iterations: {iterations}")
+
+    top = TopResults(5)
+    t0 = time.time()
+
+    # Run multiple SA restarts
+    num_restarts = 5
+    for restart in range(num_restarts):
+        iters_per = iterations // num_restarts
+
+        # Initialize: random substitution + best-guess unknowns
+        sub = list(range(26))
+        random.shuffle(sub)
+        unknowns = get_unknowns_from_key(BEST_GUESS_KEY)
+        if restart > 0:
+            # Perturb unknowns on restarts
+            for i in range(5):
+                unknowns[i] = random.randrange(26)
+
+        # Current state
+        key = make_key(unknowns)
+        vig_out = vig_decrypt(K4, key)
+        # Apply substitution
+        pt = ''.join(k_chr(sub[k_idx(c)]) for c in vig_out)
+        current_score = qscore(pt) + word_bonus(pt)
+
+        best_score = current_score
+        best_sub = sub[:]
+        best_unknowns = unknowns[:]
+        best_pt = pt
+
+        T = 10.0
+        alpha = 1.0 - (3.0 / iters_per)  # cool to ~T*exp(-3) by end
+
+        for it in range(iters_per):
+            new_sub = sub[:]
+            new_unknowns = unknowns[:]
+
+            r = random.random()
+            if r < 0.75:
+                # Swap two entries in substitution
+                i, j = random.sample(range(26), 2)
+                new_sub[i], new_sub[j] = new_sub[j], new_sub[i]
+            elif r < 0.90:
+                # Swap two AND another two entries
+                i, j = random.sample(range(26), 2)
+                new_sub[i], new_sub[j] = new_sub[j], new_sub[i]
+                i2, j2 = random.sample(range(26), 2)
+                new_sub[i2], new_sub[j2] = new_sub[j2], new_sub[i2]
             else:
-                # Decrypt gibberish
-                result += chr((ord(char) - ord('A') - shift) % 26 + ord('A'))
+                # Mutate one unknown key position
+                pos = random.randrange(5)
+                new_unknowns[pos] = random.randrange(26)
 
-        words = is_promising_text(result)
-        # Show results that have more words or interesting patterns
-        total_readable = len([w for w in READABLE_WORDS.keys() if w in result])
-        if len(words) > len(READABLE_WORDS) or "SLOWLY" in result or "SHADOW" in result or "UNDER" in result:
-            print(f"\n  Shift {shift:2d}: {result}")
-            print(f"    All words found: {words}")
+            key = make_key(new_unknowns)
+            vig_out = vig_decrypt(K4, key)
+            pt = ''.join(k_chr(new_sub[k_idx(c)]) for c in vig_out)
+            new_score = qscore(pt) + word_bonus(pt)
 
+            delta = new_score - current_score
+            if delta > 0 or random.random() < math.exp(delta / max(T, 0.001)):
+                sub = new_sub
+                unknowns = new_unknowns
+                current_score = new_score
 
-def analyze_position_correlation():
-    """Check if gibberish positions correlate with readable word positions."""
-    print("\n" + "="*60)
-    print("POSITION CORRELATION ANALYSIS")
-    print("="*60)
+                if current_score > best_score:
+                    best_score = current_score
+                    best_sub = sub[:]
+                    best_unknowns = unknowns[:]
+                    best_pt = pt
 
-    _, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
+            T *= alpha
 
-    # For each gibberish character, compute its distance to nearest readable word
-    print("\nGibberish character analysis:")
-    for i, (char, is_readable) in enumerate(zip(DECRYPTED, readable_mask)):
-        if not is_readable:
-            # Find nearest readable word
-            min_dist = float('inf')
-            nearest_word = None
-            for word, (start, end) in READABLE_WORDS.items():
-                dist = min(abs(i - start), abs(i - end))
-                if dist < min_dist:
-                    min_dist = dist
-                    nearest_word = word
+        # Build substitution table string
+        sub_str = ''.join(k_chr(s) for s in best_sub)
+        full_key = make_key(best_unknowns)
+        top.add(best_score, {
+            'key': full_key,
+            'substitution': f"KRYPTOS -> {sub_str}",
+            'plaintext': best_pt,
+            'restart': restart,
+        })
 
-    # Check if gibberish letters could spell something using position as key
-    gibberish_chars = [(i, DECRYPTED[i]) for i, r in enumerate(readable_mask) if not r]
+        print(f"  Restart {restart+1}/{num_restarts}: best={best_score:.2f}  PT={best_pt[:40]}...")
 
-    print(f"\nGibberish positions and letters:")
-    for pos, char in gibberish_chars[:30]:
-        print(f"  Position {pos:2d}: {char} (K4 char: {K4[pos]})")
+    elapsed = time.time() - t0
+    print(f"  Total time: {elapsed:.1f}s")
+    top.print_results("VIG-29 + SIMPLE SUBSTITUTION")
+    return top
 
+# ============================================================
+# HYPOTHESIS 2: VIGENERE-29 then COLUMNAR TRANSPOSITION
+# ============================================================
 
-def try_position_based_shift():
-    """Try shifting gibberish by its position or related values."""
-    print("\n" + "="*60)
-    print("POSITION-BASED SHIFT ON GIBBERISH")
-    print("="*60)
+def columnar_untranspose(text, ncols, col_order):
+    """
+    Reverse columnar transposition.
+    text was produced by: write plaintext in rows of width ncols,
+    then read columns in col_order. We reverse this.
+    """
+    n = len(text)
+    nrows = (n + ncols - 1) // ncols
+    short_cols = nrows * ncols - n  # number of columns that are short (nrows-1)
 
-    _, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    # Method 1: Shift by position mod 26
-    print("\nMethod 1: Shift each gibberish char by its position mod 26:")
-    result = ""
-    for i, (char, is_readable) in enumerate(zip(DECRYPTED, readable_mask)):
-        if is_readable:
-            result += char
+    # Columns in col_order: first (ncols - short_cols) are long (nrows), rest are short (nrows-1)
+    col_lens = {}
+    for rank, col in enumerate(col_order):
+        if rank < ncols - short_cols:
+            col_lens[col] = nrows
         else:
-            shift = i % 26
-            result += chr((ord(char) - ord('A') - shift) % 26 + ord('A'))
-    print(f"  {result}")
-    print(f"  Words: {is_promising_text(result)}")
+            col_lens[col] = nrows - 1
 
-    # Method 2: Use K4 position in original ciphertext as shift
-    print("\nMethod 2: Shift gibberish by K4 letter value at that position:")
-    result = ""
-    for i, (char, is_readable) in enumerate(zip(DECRYPTED, readable_mask)):
-        if is_readable:
-            result += char
+    # Split text into columns in col_order
+    cols = {}
+    pos = 0
+    for col in col_order:
+        length = col_lens[col]
+        cols[col] = text[pos:pos+length]
+        pos += length
+
+    # Read by rows
+    result = []
+    for row in range(nrows):
+        for col in range(ncols):
+            if row < len(cols.get(col, '')):
+                result.append(cols[col][row])
+    return ''.join(result)
+
+def test_vig_then_columnar(iterations=500000):
+    """
+    After Vig-29 decrypt, un-transpose with various column widths.
+    SA optimizes column order + unknown key positions.
+    Cribs must appear in output but NOT necessarily at positions 21 and 63.
+    """
+    print("\n" + "#"*80)
+    print("# HYPOTHESIS 2: VIGENERE-29 then COLUMNAR TRANSPOSITION")
+    print("#"*80)
+    print(f"  Iterations per width: {iterations}")
+
+    widths = [7, 8, 9, 10, 11, 13, 14]
+    global_top = TopResults(5)
+    t0 = time.time()
+
+    for ncols in widths:
+        print(f"\n  --- Testing width {ncols} ---")
+        top = TopResults(5)
+
+        num_restarts = 3
+        iters_per = iterations // num_restarts
+
+        for restart in range(num_restarts):
+            # Initialize
+            col_order = list(range(ncols))
+            random.shuffle(col_order)
+            unknowns = get_unknowns_from_key(BEST_GUESS_KEY)
+            if restart > 0:
+                for i in range(5):
+                    unknowns[i] = random.randrange(26)
+
+            key = make_key(unknowns)
+            vig_out = vig_decrypt(K4, key)
+            pt = columnar_untranspose(vig_out, ncols, col_order)
+            current_score = qscore(pt) + word_bonus(pt)
+
+            best_score = current_score
+            best_order = col_order[:]
+            best_unknowns = unknowns[:]
+            best_pt = pt
+
+            T = 10.0
+            alpha = 1.0 - (3.0 / iters_per)
+
+            for it in range(iters_per):
+                new_order = col_order[:]
+                new_unknowns = unknowns[:]
+
+                r = random.random()
+                if r < 0.50:
+                    # Swap two columns
+                    i, j = random.sample(range(ncols), 2)
+                    new_order[i], new_order[j] = new_order[j], new_order[i]
+                elif r < 0.70:
+                    # Move a column
+                    i = random.randrange(ncols)
+                    j = random.randrange(ncols)
+                    col = new_order.pop(i)
+                    new_order.insert(j, col)
+                elif r < 0.85:
+                    # Reverse a segment of the column order
+                    i = random.randrange(ncols)
+                    j = random.randrange(i+1, min(i+5, ncols)+1)
+                    new_order[i:j] = reversed(new_order[i:j])
+                else:
+                    # Mutate unknown key position
+                    pos = random.randrange(5)
+                    new_unknowns[pos] = random.randrange(26)
+
+                key = make_key(new_unknowns)
+                vig_out = vig_decrypt(K4, key)
+                pt = columnar_untranspose(vig_out, ncols, new_order)
+                new_score = qscore(pt) + word_bonus(pt)
+
+                delta = new_score - current_score
+                if delta > 0 or random.random() < math.exp(delta / max(T, 0.001)):
+                    col_order = new_order
+                    unknowns = new_unknowns
+                    current_score = new_score
+
+                    if current_score > best_score:
+                        best_score = current_score
+                        best_order = col_order[:]
+                        best_unknowns = unknowns[:]
+                        best_pt = pt
+
+                T *= alpha
+
+            full_key = make_key(best_unknowns)
+            top.add(best_score, {
+                'key': full_key,
+                'width': ncols,
+                'col_order': best_order,
+                'plaintext': best_pt,
+            })
+            global_top.add(best_score, {
+                'key': full_key,
+                'width': ncols,
+                'col_order': best_order,
+                'plaintext': best_pt,
+            })
+
+        # Print best for this width
+        bs = top.results[0] if top.results else None
+        if bs:
+            wds = found_words(bs[1]['plaintext'])
+            print(f"    Best score: {bs[0]:.2f}  Words: {wds}")
+            print(f"    PT: {bs[1]['plaintext'][:50]}...")
+            print(f"    Col order: {bs[1]['col_order']}")
+
+    elapsed = time.time() - t0
+    print(f"\n  Total time: {elapsed:.1f}s")
+    global_top.print_results("VIG-29 + COLUMNAR TRANSPOSITION (all widths)")
+    return global_top
+
+# ============================================================
+# HYPOTHESIS 3: VIGENERE-29 then ROUTE CIPHER
+# ============================================================
+
+def route_spiral_read(grid, nrows, ncols, clockwise=True):
+    """Read a grid in a spiral pattern."""
+    result = []
+    top, bottom, left, right = 0, nrows - 1, 0, ncols - 1
+    while top <= bottom and left <= right:
+        if clockwise:
+            for c in range(left, right + 1):
+                if top < nrows and c < ncols and top * ncols + c < len(grid):
+                    result.append(grid[top][c])
+            top += 1
+            for r in range(top, bottom + 1):
+                if r < nrows and right < ncols and r * ncols + right < len(grid):
+                    result.append(grid[r][right])
+            right -= 1
+            if top <= bottom:
+                for c in range(right, left - 1, -1):
+                    if bottom < nrows and c < ncols and bottom * ncols + c < len(grid):
+                        result.append(grid[bottom][c])
+                bottom -= 1
+            if left <= right:
+                for r in range(bottom, top - 1, -1):
+                    if r < nrows and left < ncols and r * ncols + left < len(grid):
+                        result.append(grid[r][left])
+                left += 1
         else:
-            shift = ord(K4[i]) - ord('A')
-            result += chr((ord(char) - ord('A') - shift) % 26 + ord('A'))
-    print(f"  {result}")
-    print(f"  Words: {is_promising_text(result)}")
+            # Counter-clockwise
+            for r in range(top, bottom + 1):
+                if r < nrows and left < ncols:
+                    result.append(grid[r][left])
+            left += 1
+            for c in range(left, right + 1):
+                if bottom < nrows and c < ncols:
+                    result.append(grid[bottom][c])
+            bottom -= 1
+            if left <= right:
+                for r in range(bottom, top - 1, -1):
+                    if r < nrows and right < ncols:
+                        result.append(grid[r][right])
+                right -= 1
+            if top <= bottom:
+                for c in range(right, left - 1, -1):
+                    if top < nrows and c < ncols:
+                        result.append(grid[top][c])
+                top += 1
+    return ''.join(result[:N])
 
-    # Method 3: Use sum of position digits
-    print("\nMethod 3: Shift by sum of digits of position:")
-    result = ""
-    for i, (char, is_readable) in enumerate(zip(DECRYPTED, readable_mask)):
-        if is_readable:
-            result += char
+def route_zigzag_read(grid, nrows, ncols):
+    """Read a grid in a zigzag (boustrophedon) pattern."""
+    result = []
+    for r in range(nrows):
+        if r % 2 == 0:
+            for c in range(ncols):
+                if r < len(grid) and c < len(grid[r]):
+                    result.append(grid[r][c])
         else:
-            shift = sum(int(d) for d in str(i))
-            result += chr((ord(char) - ord('A') - shift) % 26 + ord('A'))
-    print(f"  {result}")
-    print(f"  Words: {is_promising_text(result)}")
+            for c in range(ncols - 1, -1, -1):
+                if r < len(grid) and c < len(grid[r]):
+                    result.append(grid[r][c])
+    return ''.join(result[:N])
 
+def route_diagonal_read(grid, nrows, ncols):
+    """Read a grid by diagonals (top-left to bottom-right)."""
+    result = []
+    for d in range(nrows + ncols - 1):
+        if d % 2 == 0:
+            r = min(d, nrows - 1)
+            c = d - r
+            while r >= 0 and c < ncols:
+                if r < len(grid) and c < len(grid[r]):
+                    result.append(grid[r][c])
+                r -= 1
+                c += 1
+        else:
+            c = min(d, ncols - 1)
+            r = d - c
+            while c >= 0 and r < nrows:
+                if r < len(grid) and c < len(grid[r]):
+                    result.append(grid[r][c])
+                r += 1
+                c -= 1
+    return ''.join(result[:N])
 
-def try_readable_word_derived_keys():
-    """Use patterns from readable words to decrypt gibberish."""
-    print("\n" + "="*60)
-    print("READABLE WORD DERIVED KEYS")
-    print("="*60)
+def route_column_read(grid, nrows, ncols):
+    """Read a grid column by column (top to bottom, left to right)."""
+    result = []
+    for c in range(ncols):
+        for r in range(nrows):
+            if r < len(grid) and c < len(grid[r]):
+                result.append(grid[r][c])
+    return ''.join(result[:N])
 
-    gibberish_sections, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-    full_gibberish = "".join(section for _, section in gibberish_sections)
+def route_reverse_row_read(grid, nrows, ncols):
+    """Read a grid row by row but bottom to top."""
+    result = []
+    for r in range(nrows - 1, -1, -1):
+        for c in range(ncols):
+            if r < len(grid) and c < len(grid[r]):
+                result.append(grid[r][c])
+    return ''.join(result[:N])
 
-    # Extract first letters of readable words: D-N-C-K-B-A
-    first_letters = "".join(word[0] for word in sorted(READABLE_WORDS.keys(),
-                           key=lambda w: READABLE_WORDS[w][0]))
-    print(f"\nFirst letters of readable words (by position): {first_letters}")
-    dec = vigenere_decrypt(full_gibberish, first_letters)
-    print(f"  Vigenere decrypt: {dec}")
-    print(f"  Words: {is_promising_text(dec)}")
+def invert_route(text, nrows, ncols, route_func):
+    """
+    Given text that was read from a grid via route_func,
+    figure out what the row-by-row reading would be.
 
-    # Concatenate all readable words
-    all_words = "".join(sorted(READABLE_WORDS.keys(), key=lambda w: READABLE_WORDS[w][0]))
-    print(f"\nAll readable words concatenated: {all_words}")
-    dec = vigenere_decrypt(full_gibberish, all_words)
-    print(f"  Vigenere decrypt: {dec}")
-    print(f"  Words: {is_promising_text(dec)}")
+    Method: create a grid, fill it row-by-row with position indices,
+    read via the route to get the reading order, then invert.
+    """
+    total = nrows * ncols
+    # Build grid of indices
+    idx_grid = []
+    pos = 0
+    for r in range(nrows):
+        row = []
+        for c in range(ncols):
+            if pos < N:
+                row.append(pos)
+            else:
+                row.append(-1)  # padding
+            pos += 1
+        idx_grid.append(row)
 
-    # Try the readable words' positions as keys
-    positions = sorted([start for start, _ in READABLE_WORDS.values()])
-    print(f"\nReadable word start positions: {positions}")
-    pos_key = "".join(chr((p % 26) + ord('A')) for p in positions)
-    print(f"  As letters (mod 26): {pos_key}")
-    dec = vigenere_decrypt(full_gibberish, pos_key)
-    print(f"  Vigenere decrypt: {dec}")
-    print(f"  Words: {is_promising_text(dec)}")
+    # Read indices in route order
+    route_order_str = route_func(
+        [[chr(idx_grid[r][c] + 32) if idx_grid[r][c] >= 0 else '\x00'
+          for c in range(ncols)] for r in range(nrows)],
+        nrows, ncols
+    )
 
+    # Actually, let's do this properly: map position-in-route to position-in-grid
+    # Create a grid filled with index chars, read via route
+    grid_chars = []
+    pos = 0
+    for r in range(nrows):
+        row = []
+        for c in range(ncols):
+            if pos < N:
+                row.append(str(pos).zfill(3))
+            else:
+                row.append("---")
+            pos += 1
+        grid_chars.append(row)
 
-def comprehensive_word_search():
-    """Search for ANY 3+ letter words in all decryption attempts."""
-    print("\n" + "="*60)
-    print("COMPREHENSIVE WORD SEARCH IN GIBBERISH DECRYPTIONS")
-    print("="*60)
+    # Instead, use a simpler approach: generate the route reading order
+    # by putting sequential chars in a grid and reading them
+    marker_grid = []
+    pos = 0
+    for r in range(nrows):
+        row = []
+        for c in range(ncols):
+            if pos < N:
+                row.append(chr(pos % 94 + 33))  # use printable ASCII
+            else:
+                row.append('\x00')
+            pos += 1
+        marker_grid.append(row)
 
-    # Large word list for comprehensive search
-    word_list = [
-        # K4 specific words
-        "SLOWLY", "DESPER", "ATELY", "SHADOW", "UNDER", "GROUND", "CLOCK",
-        "EAST", "WEST", "NORTH", "SOUTH", "LAYER", "DEGREE", "SECONDS",
-        "LANGLEY", "SANBORN", "SCHEIDT", "BERLIN", "WALL",
-        # Common words
-        "THE", "AND", "FOR", "ARE", "BUT", "NOT", "YOU", "ALL", "CAN", "HAD",
-        "HER", "WAS", "ONE", "OUR", "OUT", "DAY", "GET", "HAS", "HIM", "HIS",
-        "HOW", "MAN", "NEW", "NOW", "OLD", "SEE", "WAY", "WHO", "BOY", "DID",
-        "ITS", "LET", "PUT", "SAY", "SHE", "TOO", "USE", "THEY", "BEEN", "HAVE",
-        "MANY", "SOME", "THEM", "TIME", "VERY", "WHEN", "COME", "COULD", "MAKE",
-        "THAN", "CALL", "DOWN", "EACH", "FIND", "FIRST", "FROM", "HAND", "INTO",
-        "JUST", "KNOW", "LIKE", "LONG", "LOOK", "OVER", "ONLY", "PART", "PEOPLE",
-        "ROOM", "TAKE", "THAT", "THEIR", "THIS", "THROUGH", "WATER", "WHERE",
-        "WHICH", "WITH", "WORD", "WORK", "YEAR", "ALSO", "BACK", "BEEN", "BEFORE",
-        "HIGH", "JUST", "LAST", "LIFE", "LINE", "LIVE", "MADE", "MORE", "MUCH",
-        "NAME", "NEED", "NEXT", "ONLY", "SAME", "SELF", "SUCH", "TELL", "WELL",
-        "WHAT", "WILL", "WORLD", "WOULD", "WRITE", "ABOUT", "AFTER", "AGAIN",
-        "CLEAR", "CODE", "CIPHER", "SECRET", "HIDDEN", "MESSAGE", "TEXT", "KEY",
-        "ZERO", "FORTY", "FIFTY", "HUNDRED", "TWENTY", "THIRTY"
+    # Actually, let me just directly compute the route order as indices
+    route_indices = []
+    # Simulate route_func but collect indices instead
+    # This is route-specific, so let me build a position grid and read it
+
+    pos_grid = []
+    idx = 0
+    for r in range(nrows):
+        row = []
+        for c in range(ncols):
+            if idx < N:
+                row.append(idx)
+                idx += 1
+            else:
+                row.append(-1)
+        pos_grid.append(row)
+
+    return pos_grid  # We'll use a different approach below
+
+def get_spiral_order(nrows, ncols, n, clockwise=True):
+    """Get the reading order indices for a spiral."""
+    order = []
+    top, bottom, left, right = 0, nrows - 1, 0, ncols - 1
+    while top <= bottom and left <= right:
+        if clockwise:
+            for c in range(left, right + 1):
+                idx = top * ncols + c
+                if idx < n:
+                    order.append(idx)
+            top += 1
+            for r in range(top, bottom + 1):
+                idx = r * ncols + right
+                if idx < n:
+                    order.append(idx)
+            right -= 1
+            if top <= bottom:
+                for c in range(right, left - 1, -1):
+                    idx = bottom * ncols + c
+                    if idx < n:
+                        order.append(idx)
+                bottom -= 1
+            if left <= right:
+                for r in range(bottom, top - 1, -1):
+                    idx = r * ncols + left
+                    if idx < n:
+                        order.append(idx)
+                left += 1
+        else:
+            for r in range(top, bottom + 1):
+                idx = r * ncols + left
+                if idx < n:
+                    order.append(idx)
+            left += 1
+            for c in range(left, right + 1):
+                idx = bottom * ncols + c
+                if idx < n:
+                    order.append(idx)
+            bottom -= 1
+            if left <= right:
+                for r in range(bottom, top - 1, -1):
+                    idx = r * ncols + right
+                    if idx < n:
+                        order.append(idx)
+                right -= 1
+            if top <= bottom:
+                for c in range(right, left - 1, -1):
+                    idx = top * ncols + c
+                    if idx < n:
+                        order.append(idx)
+                top += 1
+    return order[:n]
+
+def get_zigzag_order(nrows, ncols, n):
+    """Get the reading order for zigzag (boustrophedon)."""
+    order = []
+    for r in range(nrows):
+        if r % 2 == 0:
+            for c in range(ncols):
+                idx = r * ncols + c
+                if idx < n:
+                    order.append(idx)
+        else:
+            for c in range(ncols - 1, -1, -1):
+                idx = r * ncols + c
+                if idx < n:
+                    order.append(idx)
+    return order[:n]
+
+def get_diagonal_order(nrows, ncols, n):
+    """Get the reading order for diagonal traversal."""
+    order = []
+    for d in range(nrows + ncols - 1):
+        if d % 2 == 0:
+            r = min(d, nrows - 1)
+            c = d - r
+            while r >= 0 and c < ncols:
+                idx = r * ncols + c
+                if idx < n:
+                    order.append(idx)
+                r -= 1
+                c += 1
+        else:
+            c = min(d, ncols - 1)
+            r = d - c
+            while c >= 0 and r < nrows:
+                idx = r * ncols + c
+                if idx < n:
+                    order.append(idx)
+                r += 1
+                c -= 1
+    return order[:n]
+
+def get_column_order(nrows, ncols, n):
+    """Get the reading order for column-by-column."""
+    order = []
+    for c in range(ncols):
+        for r in range(nrows):
+            idx = r * ncols + c
+            if idx < n:
+                order.append(idx)
+    return order[:n]
+
+def apply_inverse_route(text, route_order):
+    """
+    If ciphertext was produced by writing plaintext into grid row-by-row
+    then reading via route_order, this inverts it.
+    route_order[i] = grid position that was read at position i.
+    So: ciphertext[i] came from plaintext[route_order[i]].
+    To invert: plaintext[route_order[i]] = ciphertext[i].
+    """
+    n = len(text)
+    pt = ['?'] * n
+    for i, grid_pos in enumerate(route_order):
+        if i < n and grid_pos < n:
+            pt[grid_pos] = text[i]
+    return ''.join(pt)
+
+def apply_route(text, route_order):
+    """
+    If plaintext was in the grid row-by-row, reading via route_order gives ciphertext.
+    ciphertext[i] = plaintext[route_order[i]]
+    """
+    return ''.join(text[route_order[i]] for i in range(min(len(text), len(route_order))))
+
+def test_vig_then_route(iterations=500000):
+    """
+    Write Vig-29 output into a grid, read by different routes.
+    Test grid sizes: 7x14(-1), 8x13(-7), 9x11(-2), 10x10(-3)
+    Routes: spiral CW, spiral CCW, zigzag, diagonal, column-by-column
+    """
+    print("\n" + "#"*80)
+    print("# HYPOTHESIS 3: VIGENERE-29 then ROUTE CIPHER")
+    print("#"*80)
+    print(f"  Iterations: {iterations} (SA over unknown key positions)")
+
+    grid_configs = [
+        (7, 14, "7x14"),
+        (8, 13, "8x13"),
+        (9, 11, "9x11"),
+        (10, 10, "10x10"),
+        (14, 7, "14x7"),
+        (13, 8, "13x8"),
+        (11, 9, "11x9"),
     ]
 
-    gibberish_sections, _ = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-    full_gibberish = "".join(section for _, section in gibberish_sections)
-
-    def check_words(text, label):
-        found = []
-        for word in word_list:
-            if len(word) >= 4 and word in text:  # Only 4+ letter words for significance
-                found.append(word)
-        if found:
-            print(f"{label}: Found {found}")
-            return True
-        return False
-
-    # Try all Caesar shifts
-    print("\nCaesar shifts with 4+ letter words:")
-    for shift in range(1, 26):
-        dec = caesar_decrypt(full_gibberish, shift)
-        check_words(dec, f"  Shift {shift}")
-
-    # Try all 2-letter Vigenere keys
-    print("\n2-letter Vigenere keys with 4+ letter words:")
-    for k1 in string.ascii_uppercase:
-        for k2 in string.ascii_uppercase:
-            key = k1 + k2
-            dec = vigenere_decrypt(full_gibberish, key)
-            check_words(dec, f"  Key '{key}'")
-
-
-def try_mixed_layer_decryption():
-    """Try decrypting with different keys for different sections."""
-    print("\n" + "="*60)
-    print("MIXED LAYER DECRYPTION")
-    print("="*60)
-
-    gibberish_sections, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    # Try applying different Caesar shifts to different gibberish sections
-    print("\nTrying different shifts for each gibberish section:")
-
-    # Best shifts found for individual sections
-    section_shifts = {
-        0: [0],      # 'U' - single char, try keeping
-        1: [3],      # 'UQAPBZDBKZELN' - shift 3 gives 'WAY'
-        2: list(range(26)),  # 'GUWC' - try all
-        3: [5, 11, 17],  # 'SQGUZOUAFZFETMMNXPSOZMPAPGLKGB' - found HIS, OUT, PUT
-        4: [9],      # 'VJWQU' - shift 9 gives 'MAN'
-        5: list(range(26)),  # 'EJYBUKCAYF' - try all
+    route_generators = {
+        'spiral_CW': lambda nr, nc: get_spiral_order(nr, nc, N, clockwise=True),
+        'spiral_CCW': lambda nr, nc: get_spiral_order(nr, nc, N, clockwise=False),
+        'zigzag': lambda nr, nc: get_zigzag_order(nr, nc, N),
+        'diagonal': lambda nr, nc: get_diagonal_order(nr, nc, N),
+        'columns': lambda nr, nc: get_column_order(nr, nc, N),
     }
 
-    # Show individual section results with their best shifts
-    for i, (start, section) in enumerate(gibberish_sections):
-        if len(section) >= 3:
-            print(f"\nSection {i}: '{section}' (pos {start})")
-            for shift in section_shifts.get(i, range(26))[:5]:
-                dec = caesar_decrypt(section, shift)
-                print(f"  Shift {shift}: {dec}")
-
-
-def try_three_letter_keys():
-    """Try 3-letter Vigenere keys on gibberish."""
-    print("\n" + "="*60)
-    print("3-LETTER VIGENERE KEY SEARCH (targeted)")
-    print("="*60)
-
-    gibberish_sections, _ = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-    full_gibberish = "".join(section for _, section in gibberish_sections)
-
-    # Focus on keys that might produce more words
-    # Try combinations starting with promising letters
-    promising_starts = ['A', 'B', 'C', 'D', 'K', 'S', 'T']
-
-    word_list = [
-        "SLOWLY", "SHADOW", "UNDER", "GROUND", "CLOCK", "LAYER", "DEGREE",
-        "SECONDS", "LANGLEY", "SANBORN", "BERLIN", "THE", "AND", "FOR",
-        "NOT", "YOU", "ALL", "WAS", "ONE", "OUT", "DAY", "HIS", "MAN", "WAY",
-        "DID", "PUT", "TOO", "SPY", "HAD", "THEY", "BEEN", "HAVE", "FROM",
-        "TIME", "OVER", "ONLY", "BACK", "SELF", "THAT", "THIS", "WITH"
-    ]
-
-    found_results = []
-
-    for k1 in promising_starts:
-        for k2 in string.ascii_uppercase:
-            for k3 in string.ascii_uppercase:
-                key = k1 + k2 + k3
-                dec = vigenere_decrypt(full_gibberish, key)
-
-                found = []
-                for word in word_list:
-                    if len(word) >= 4 and word in dec:
-                        found.append(word)
-
-                if len(found) >= 1:
-                    found_results.append((key, dec, found))
-
-    # Sort by number of words found
-    found_results.sort(key=lambda x: (-len(x[2]), -max(len(w) for w in x[2]) if x[2] else 0))
-
-    print("\nTop results with 4+ letter words:")
-    for key, dec, found in found_results[:30]:
-        print(f"  Key '{key}': {found}")
-        if len(found) > 1 or (found and len(found[0]) >= 5):
-            print(f"    Full: {dec}")
-
-
-def interleaved_decryption():
-    """Try if odd/even positions use different keys."""
-    print("\n" + "="*60)
-    print("INTERLEAVED KEY ANALYSIS")
-    print("="*60)
-
-    gibberish_sections, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-    full_gibberish = "".join(section for _, section in gibberish_sections)
-
-    # Separate odd and even positions in gibberish
-    even_gib = full_gibberish[::2]
-    odd_gib = full_gibberish[1::2]
-
-    print(f"\nEven positions in gibberish: {even_gib}")
-    print(f"Odd positions in gibberish: {odd_gib}")
-
-    word_list = ["SLOWLY", "SHADOW", "UNDER", "CLOCK", "LAYER", "THE", "AND",
-                 "FOR", "NOT", "YOU", "WAS", "OUT", "HIS", "MAN", "WAY", "TIME"]
-
-    # Try different single-key Caesar on each half
-    print("\nBest Caesar for even positions:")
-    for shift in range(26):
-        dec = caesar_decrypt(even_gib, shift)
-        for word in word_list:
-            if len(word) >= 3 and word in dec:
-                print(f"  Shift {shift}: {dec} -> {word}")
-
-    print("\nBest Caesar for odd positions:")
-    for shift in range(26):
-        dec = caesar_decrypt(odd_gib, shift)
-        for word in word_list:
-            if len(word) >= 3 and word in dec:
-                print(f"  Shift {shift}: {dec} -> {word}")
-
-
-def segment_pattern_analysis():
-    """Analyze if different segments use different encryption."""
-    print("\n" + "="*60)
-    print("SEGMENT PATTERN ANALYSIS")
-    print("="*60)
-
-    # Split the full decrypted text into 29-char segments (period 29)
-    print("\nPeriod 29 segments:")
-    for i in range(0, len(DECRYPTED), 29):
-        segment = DECRYPTED[i:i+29]
-        print(f"  {i:2d}-{i+28:2d}: {segment}")
-
-    # Check if gibberish appears at consistent positions within segments
-    _, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    print("\nGibberish positions modulo 29:")
-    gib_mod29 = {}
-    for i, is_readable in enumerate(readable_mask):
-        if not is_readable:
-            mod = i % 29
-            if mod not in gib_mod29:
-                gib_mod29[mod] = []
-            gib_mod29[mod].append(DECRYPTED[i])
-
-    for mod in sorted(gib_mod29.keys()):
-        print(f"  Position mod 29 = {mod:2d}: {''.join(gib_mod29[mod])}")
-
-
-def try_autokey_cipher():
-    """Try autokey cipher on gibberish."""
-    print("\n" + "="*60)
-    print("AUTOKEY CIPHER ANALYSIS")
-    print("="*60)
-
-    gibberish_sections, _ = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-    full_gibberish = "".join(section for _, section in gibberish_sections)
-
-    def autokey_decrypt(text, primer):
-        """Decrypt autokey cipher with given primer."""
-        result = []
-        key_stream = list(primer)
-
-        for i, c in enumerate(text):
-            if c in string.ascii_uppercase:
-                shift = ord(key_stream[i % len(key_stream)]) - ord('A')
-                plain = chr((ord(c) - ord('A') - shift) % 26 + ord('A'))
-                result.append(plain)
-                if i >= len(primer) - 1:
-                    # In autokey, plaintext becomes next key
-                    key_stream.append(plain)
-            else:
-                result.append(c)
-
-        return "".join(result)
-
-    # Try various primers
-    primers = ["A", "K", "D", "KRYPTOS", "PALIMPSEST", "ABSCISSA",
-               "CIA", "KGB", "BERLIN", "CLOCK", "DAY", "NORTHEAST", "ABOVE"]
-
-    word_list = ["SLOWLY", "SHADOW", "UNDER", "CLOCK", "THE", "AND", "FOR",
-                 "NOT", "YOU", "WAS", "OUT", "HIS", "MAN", "WAY", "TIME", "LAYER"]
-
-    print("\nAutokey decryption attempts:")
-    for primer in primers:
-        dec = autokey_decrypt(full_gibberish, primer)
-        found = [w for w in word_list if w in dec]
-        if found:
-            print(f"  Primer '{primer}': {dec}")
-            print(f"    Found: {found}")
-
-
-def analyze_running_key():
-    """Try using readable text as running key for gibberish."""
-    print("\n" + "="*60)
-    print("RUNNING KEY ANALYSIS")
-    print("="*60)
-
-    gibberish_sections, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    # Get readable text only
-    readable_text = "".join(DECRYPTED[i] for i, r in enumerate(readable_mask) if r)
-    print(f"\nReadable text: {readable_text}")
-
-    # Get gibberish only
-    full_gibberish = "".join(section for _, section in gibberish_sections)
-    print(f"Gibberish text: {full_gibberish}")
-
-    # Try using readable text as Vigenere key for gibberish
-    dec = vigenere_decrypt(full_gibberish, readable_text)
-    print(f"\nGibberish decrypted with readable as key: {dec}")
-
-    word_list = ["SLOWLY", "SHADOW", "UNDER", "CLOCK", "THE", "AND", "FOR",
-                 "NOT", "YOU", "WAS", "OUT", "HIS", "MAN", "WAY", "TIME"]
-    found = [w for w in word_list if w in dec]
-    if found:
-        print(f"  Found: {found}")
-
-    # Try reverse
-    dec = vigenere_decrypt(full_gibberish, readable_text[::-1])
-    print(f"\nGibberish decrypted with reversed readable as key: {dec}")
-    found = [w for w in word_list if w in dec]
-    if found:
-        print(f"  Found: {found}")
-
-
-def exhaustive_word_search_all_methods():
-    """Final exhaustive search combining all methods."""
-    print("\n" + "="*60)
-    print("EXHAUSTIVE COMBINED ANALYSIS")
-    print("="*60)
-
-    gibberish_sections, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-    full_gibberish = "".join(section for _, section in gibberish_sections)
-
-    # Target words that would confirm K4 solution
-    target_words = ["SLOWLY", "DESPER", "ATELY", "SHADOW", "UNDER", "GROUND",
-                    "LAYER", "SECOND", "LANGLEY", "CLOCK"]
-
-    print("\nSearching for K4-specific words in all decryption attempts...")
-
-    # Method 1: All Caesar shifts
-    for shift in range(26):
-        dec = caesar_decrypt(full_gibberish, shift)
-        for word in target_words:
-            if word in dec:
-                print(f"  CAESAR shift {shift}: Found '{word}' in {dec}")
-
-    # Method 2: All 2-letter Vigenere
-    for k1 in string.ascii_uppercase:
-        for k2 in string.ascii_uppercase:
-            key = k1 + k2
-            dec = vigenere_decrypt(full_gibberish, key)
-            for word in target_words:
-                if word in dec:
-                    print(f"  VIGENERE key '{key}': Found '{word}' in {dec}")
-
-    # Method 3: Position-based with variations
-    for offset in range(26):
-        result = ""
-        for i, char in enumerate(full_gibberish):
-            shift = (i + offset) % 26
-            result += chr((ord(char) - ord('A') - shift) % 26 + ord('A'))
-        for word in target_words:
-            if word in result:
-                print(f"  POSITION (offset {offset}): Found '{word}' in {result}")
-
-    print("\nExhaustive search complete.")
-
-
-def analyze_visible_word_boundaries():
-    """Analyze the boundaries between readable and gibberish sections."""
-    print("\n" + "="*60)
-    print("WORD BOUNDARY ANALYSIS")
-    print("="*60)
-
-    # What if we look at text around word boundaries?
-    print("\nContext around each readable word:")
-    for word, (start, end) in sorted(READABLE_WORDS.items(), key=lambda x: x[1][0]):
-        context_start = max(0, start - 5)
-        context_end = min(len(DECRYPTED), end + 5)
-        context = DECRYPTED[context_start:context_end]
-
-        # Mark the word
-        before = DECRYPTED[context_start:start]
-        after = DECRYPTED[end:context_end]
-
-        print(f"  '{word}': ...{before}[{word}]{after}...")
-
-
-def try_different_key_at_each_position():
-    """What if different periods/keys apply to different positions?"""
-    print("\n" + "="*60)
-    print("VARIABLE KEY BY PERIOD POSITION")
-    print("="*60)
-
-    # The current key is period 29: DXNZKELYOIECBAQKVAATCRDUMPABT
-    current_key = "DXNZKELYOIECBAQKVAATCRDUMPABT"
-
-    _, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    # Check what key positions correspond to readable vs gibberish
-    print("\nKey positions for readable vs gibberish:")
-
-    readable_key_positions = []
-    gibberish_key_positions = []
-
-    for i, is_readable in enumerate(readable_mask):
-        key_pos = i % 29
-        if is_readable:
-            readable_key_positions.append(key_pos)
-        else:
-            gibberish_key_positions.append(key_pos)
-
-    print(f"Key positions producing readable text: {set(readable_key_positions)}")
-    print(f"Key positions producing gibberish: {set(gibberish_key_positions)}")
-
-    # Check if certain key positions are "wrong"
-    print("\nKey letter frequency at each position for gibberish:")
-    gib_by_keypos = {}
-    for i, is_readable in enumerate(readable_mask):
-        if not is_readable:
-            key_pos = i % 29
-            key_letter = current_key[key_pos]
-            if key_pos not in gib_by_keypos:
-                gib_by_keypos[key_pos] = []
-            gib_by_keypos[key_pos].append((i, DECRYPTED[i], K4[i], key_letter))
-
-    for pos in sorted(gib_by_keypos.keys()):
-        items = gib_by_keypos[pos]
-        print(f"  Key pos {pos:2d} ('{current_key[pos]}'): {len(items)} gibberish chars")
-        for idx, dec_char, k4_char, key_char in items[:3]:
-            print(f"    Position {idx}: K4='{k4_char}' -> Decrypted='{dec_char}'")
-
-
-def try_modifying_key_at_gibberish_positions():
-    """Try modifying the key at positions that produce gibberish."""
-    print("\n" + "="*60)
-    print("MODIFIED KEY ANALYSIS")
-    print("="*60)
-
-    current_key = "DXNZKELYOIECBAQKVAATCRDUMPABT"
-
-    _, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
-
-    # For each gibberish position, what key letter would produce good text?
-    word_list = ["SLOWLY", "DESPER", "ATELY", "SHADOW", "UNDER", "GROUND",
-                 "LAYER", "SECOND", "LANGLEY", "THE", "AND", "FOR", "WAS",
-                 "THAT", "WITH", "THIS", "HAVE", "FROM", "TIME", "BEEN"]
-
-    # Try shifting only certain key positions
-    print("\nTrying to find alternative key letters that improve readability...")
-
-    # Get gibberish positions and their key positions
-    gib_positions = [i for i, r in enumerate(readable_mask) if not r]
-
-    # Try modifying key at positions that have most gibberish
-    key_position_counts = {}
-    for pos in gib_positions:
-        key_pos = pos % 29
-        key_position_counts[key_pos] = key_position_counts.get(key_pos, 0) + 1
-
-    # Focus on key positions with most gibberish
-    problem_positions = sorted(key_position_counts.items(), key=lambda x: -x[1])[:5]
-    print(f"\nKey positions with most gibberish: {problem_positions}")
-
-    # For the most problematic key position, try all alternatives
-    for problem_pos, count in problem_positions[:2]:
-        print(f"\nTrying alternatives for key position {problem_pos} (affects {count} chars):")
-        original_letter = current_key[problem_pos]
-
-        for alt_letter in string.ascii_uppercase:
-            if alt_letter == original_letter:
+    global_top = TopResults(5)
+    t0 = time.time()
+
+    for nrows, ncols, label in grid_configs:
+        if nrows * ncols < N:
+            continue  # grid too small
+
+        for route_name, gen_func in route_generators.items():
+            route_order = gen_func(nrows, ncols)
+            if len(route_order) < N:
                 continue
 
-            # Create modified key
-            new_key = list(current_key)
-            new_key[problem_pos] = alt_letter
-            new_key = "".join(new_key)
+            # Deduplicate: make sure all N positions are covered
+            if len(set(route_order[:N])) < N:
+                continue
 
-            # Decrypt K4 with modified key
-            result = vigenere_decrypt(K4, new_key)
+            # SA to optimize the 5 unknown key positions
+            unknowns = get_unknowns_from_key(BEST_GUESS_KEY)
 
-            # Check if this creates new readable words
-            found = []
-            for word in word_list:
-                if word in result and word not in DECRYPTED:
-                    found.append(word)
+            key = make_key(unknowns)
+            vig_out = vig_decrypt(K4, key)
 
-            if found:
-                print(f"  Key pos {problem_pos}: '{original_letter}'->'{alt_letter}': NEW words {found}")
-                print(f"    Result: {result}")
+            # Two directions: route was applied to plaintext then Vig,
+            # OR Vig was applied then route
+            # We test: CT = route(Vig(PT, key))
+            # => PT = Vig^-1(route^-1(CT), key)  ... but that changes Vig positions
+            # OR: CT = Vig(route(PT), key)
+            # => Vig^-1(CT, key) = route(PT) => PT = route^-1(Vig^-1(CT, key))
+            # The second interpretation: Vig first, then un-route the result
 
+            # Interpretation: Vig output was produced by route-reading the plaintext grid
+            # So we invert the route on vig_out to get plaintext
+            pt = apply_inverse_route(vig_out, route_order[:N])
+            current_score = qscore(pt) + word_bonus(pt)
 
-def analyze_original_k4_at_readable():
-    """Check what the original K4 looks like at readable positions."""
-    print("\n" + "="*60)
-    print("K4 PATTERNS AT READABLE POSITIONS")
-    print("="*60)
+            best_score = current_score
+            best_unknowns = unknowns[:]
+            best_pt = pt
 
-    _, readable_mask = identify_gibberish_sections(DECRYPTED, READABLE_WORDS)
+            T = 5.0
+            sa_iters = iterations // (len(grid_configs) * len(route_generators))
+            alpha = 1.0 - (3.0 / max(sa_iters, 1))
 
-    print("\nOriginal K4 at readable text positions:")
-    for word, (start, end) in sorted(READABLE_WORDS.items(), key=lambda x: x[1][0]):
-        k4_segment = K4[start:end]
-        print(f"  {word:15s} (pos {start:2d}-{end:2d}): K4 = '{k4_segment}'")
+            for it in range(sa_iters):
+                new_unknowns = unknowns[:]
+                pos = random.randrange(5)
+                new_unknowns[pos] = random.randrange(26)
 
+                key = make_key(new_unknowns)
+                vig_out = vig_decrypt(K4, key)
+                pt = apply_inverse_route(vig_out, route_order[:N])
+                new_score = qscore(pt) + word_bonus(pt)
 
-def summary_and_conclusions():
-    """Summarize findings and draw conclusions."""
-    print("\n" + "="*60)
-    print("SUMMARY AND CONCLUSIONS")
-    print("="*60)
+                delta = new_score - current_score
+                if delta > 0 or random.random() < math.exp(delta / max(T, 0.001)):
+                    unknowns = new_unknowns
+                    current_score = new_score
+                    if current_score > best_score:
+                        best_score = current_score
+                        best_unknowns = unknowns[:]
+                        best_pt = pt
 
-    print("""
-FINDINGS:
+                T *= alpha
 
-1. The Period 29 decryption produces readable words at these positions:
-   - DAY (1-4)
-   - NORTHEAST (17-26)
-   - CIA (30-33) [overlaps with IAA in decryption]
-   - KGB (63-66)
-   - BERLINCLOCK (66-77)
-   - ABOVE (82-87)
+            # Also test: route was applied AFTER Vig
+            # CT = Vig(PT, key), but CT was route-read from intermediate grid
+            # So actual CT positions are scrambled by route
+            # This means: route(intermediate) = K4
+            # intermediate[route_order[i]] = K4[i] ... wait, let's think again
+            # If encryption was: write Vig output into grid, read by route to get CT
+            # Then: K4[i] = vig_out[route_order[i]]
+            # To decrypt: vig_out[route_order[i]] = K4[i]
+            # => vig_out = inverse_route(K4)
+            # Then PT = Vig^-1(vig_out, key)
+            # But this changes which key position applies to which character!
+            # Let's try this interpretation too:
 
-2. No secondary encryption was found that produces K4-specific words
-   (SLOWLY, SHADOW, UNDER, GROUND, LAYER, etc.) from the gibberish.
+            unknowns2 = get_unknowns_from_key(BEST_GUESS_KEY)
+            unrouted_ct = apply_inverse_route(K4, route_order[:N])
+            key2 = make_key(unknowns2)
+            pt2 = vig_decrypt(unrouted_ct, key2)
+            score2 = qscore(pt2) + word_bonus(pt2)
 
-3. Common English words (THE, AND, FOR, WAS, etc.) appear in some
-   Caesar/Vigenere decryptions, but these are likely coincidental.
+            best_score2 = score2
+            best_unknowns2 = unknowns2[:]
+            best_pt2 = pt2
 
-4. Position-based analysis shows gibberish appears at multiple key
-   positions, suggesting the issue isn't with specific key letters.
+            T = 5.0
+            for it in range(sa_iters):
+                new_unknowns2 = unknowns2[:]
+                pos = random.randrange(5)
+                new_unknowns2[pos] = random.randrange(26)
 
-CONCLUSIONS:
+                key2 = make_key(new_unknowns2)
+                pt2 = vig_decrypt(unrouted_ct, key2)
+                score2 = qscore(pt2) + word_bonus(pt2)
 
-A. The Period 29 key may be partially correct, revealing fragments
-   of the true message.
+                delta = score2 - best_score2
+                if delta > 0 or random.random() < math.exp(delta / max(T, 0.001)):
+                    unknowns2 = new_unknowns2
+                    if score2 > best_score2:
+                        best_score2 = score2
+                        best_unknowns2 = unknowns2[:]
+                        best_pt2 = pt2
 
-B. The gibberish may not be double-encrypted; it may simply be
-   incorrectly decrypted text due to:
-   - Wrong key letters at some positions
-   - Wrong period (perhaps not exactly 29)
-   - A different cipher mechanism
+                T *= alpha
 
-C. The readable words could be:
-   - True parts of the message
-   - False positives (coincidental word formations)
-   - Deliberate red herrings
+            # Record best of both interpretations
+            full_key = make_key(best_unknowns)
+            global_top.add(best_score, {
+                'key': full_key,
+                'grid': label,
+                'route': route_name,
+                'direction': 'Vig then un-route',
+                'plaintext': best_pt,
+            })
 
-D. Alternative approaches to investigate:
-   - Try periods near 29 (28, 30)
-   - Search for different key that produces MORE readable words
-   - Consider the readable words as clues to the actual solution
-""")
+            full_key2 = make_key(best_unknowns2)
+            global_top.add(best_score2, {
+                'key': full_key2,
+                'grid': label,
+                'route': route_name,
+                'direction': 'un-route CT then Vig',
+                'plaintext': best_pt2,
+            })
+
+    elapsed = time.time() - t0
+    print(f"  Total time: {elapsed:.1f}s")
+    global_top.print_results("VIG-29 + ROUTE CIPHER")
+    return global_top
+
+# ============================================================
+# HYPOTHESIS 4: VIGENERE-29 then RAIL FENCE
+# ============================================================
+
+def rail_fence_encode_order(n, num_rails):
+    """Get the reading order for rail fence cipher with given number of rails."""
+    if num_rails <= 1 or num_rails >= n:
+        return list(range(n))
+
+    # Build the rail assignments
+    rails = [[] for _ in range(num_rails)]
+    rail = 0
+    direction = 1
+    for i in range(n):
+        rails[rail].append(i)
+        if rail == 0:
+            direction = 1
+        elif rail == num_rails - 1:
+            direction = -1
+        rail += direction
+
+    # Reading order: rail 0 first, then rail 1, etc.
+    order = []
+    for rail_list in rails:
+        order.extend(rail_list)
+    return order
+
+def rail_fence_decode(text, num_rails):
+    """Decode a rail fence cipher."""
+    n = len(text)
+    if num_rails <= 1 or num_rails >= n:
+        return text
+
+    encode_order = rail_fence_encode_order(n, num_rails)
+
+    # encode_order[i] = original position that ends up at position i in encoded text
+    # Wait: encode_order gives positions in original text in the order they appear in cipher
+    # So cipher[j] = plain[encode_order[j]]
+    # To decode: plain[encode_order[j]] = cipher[j]
+
+    plain = ['?'] * n
+    for j, orig_pos in enumerate(encode_order):
+        plain[orig_pos] = text[j]
+    return ''.join(plain)
+
+def test_vig_then_railfence(iterations=500000):
+    """
+    For each rail count (2-10), un-do the rail fence on Vig-29 output.
+    SA optimizes the 5 unknown key positions.
+    """
+    print("\n" + "#"*80)
+    print("# HYPOTHESIS 4: VIGENERE-29 then RAIL FENCE")
+    print("#"*80)
+    print(f"  Iterations per rail count: {iterations // 9}")
+
+    global_top = TopResults(5)
+    t0 = time.time()
+
+    for num_rails in range(2, 11):
+        iters = iterations // 9
+
+        # SA over the 5 unknown key positions
+        unknowns = get_unknowns_from_key(BEST_GUESS_KEY)
+
+        key = make_key(unknowns)
+        vig_out = vig_decrypt(K4, key)
+
+        # Interpretation 1: PT was rail-fenced, then Vig encrypted
+        # CT = Vig(railfence(PT), key)
+        # => railfence(PT) = Vig^-1(CT, key) = vig_out
+        # => PT = rail_fence_decode(vig_out)
+        pt1 = rail_fence_decode(vig_out, num_rails)
+        score1 = qscore(pt1) + word_bonus(pt1)
+
+        best_score1 = score1
+        best_unknowns1 = unknowns[:]
+        best_pt1 = pt1
+
+        # Interpretation 2: Vig output was rail-fenced to produce CT
+        # CT = railfence(Vig(PT, key))
+        # => Vig(PT, key) = rail_fence_decode(CT)
+        # => PT = Vig^-1(rail_fence_decode(CT), key)
+        # But this changes Vig alignment!
+        decoded_ct = rail_fence_decode(K4, num_rails)
+        pt2 = vig_decrypt(decoded_ct, key)
+        score2 = qscore(pt2) + word_bonus(pt2)
+
+        best_score2 = score2
+        best_unknowns2 = unknowns[:]
+        best_pt2 = pt2
+
+        T = 5.0
+        alpha = 1.0 - (3.0 / max(iters, 1))
+
+        unknowns1 = unknowns[:]
+        unknowns2 = unknowns[:]
+        cur_score1 = score1
+        cur_score2 = score2
+
+        for it in range(iters):
+            # Interpretation 1
+            new_unk1 = unknowns1[:]
+            pos = random.randrange(5)
+            new_unk1[pos] = random.randrange(26)
+
+            key1 = make_key(new_unk1)
+            vo1 = vig_decrypt(K4, key1)
+            p1 = rail_fence_decode(vo1, num_rails)
+            s1 = qscore(p1) + word_bonus(p1)
+
+            delta1 = s1 - cur_score1
+            if delta1 > 0 or random.random() < math.exp(delta1 / max(T, 0.001)):
+                unknowns1 = new_unk1
+                cur_score1 = s1
+                if s1 > best_score1:
+                    best_score1 = s1
+                    best_unknowns1 = unknowns1[:]
+                    best_pt1 = p1
+
+            # Interpretation 2
+            new_unk2 = unknowns2[:]
+            pos = random.randrange(5)
+            new_unk2[pos] = random.randrange(26)
+
+            key2 = make_key(new_unk2)
+            p2 = vig_decrypt(decoded_ct, key2)
+            s2 = qscore(p2) + word_bonus(p2)
+
+            delta2 = s2 - cur_score2
+            if delta2 > 0 or random.random() < math.exp(delta2 / max(T, 0.001)):
+                unknowns2 = new_unk2
+                cur_score2 = s2
+                if s2 > best_score2:
+                    best_score2 = s2
+                    best_unknowns2 = unknowns2[:]
+                    best_pt2 = p2
+
+            T *= alpha
+
+        wds1 = found_words(best_pt1)
+        wds2 = found_words(best_pt2)
+        print(f"  Rails={num_rails}: interp1={best_score1:.2f} words={wds1}  |  interp2={best_score2:.2f} words={wds2}")
+
+        global_top.add(best_score1, {
+            'key': make_key(best_unknowns1),
+            'rails': num_rails,
+            'direction': 'Vig then un-railfence',
+            'plaintext': best_pt1,
+        })
+        global_top.add(best_score2, {
+            'key': make_key(best_unknowns2),
+            'rails': num_rails,
+            'direction': 'un-railfence CT then Vig',
+            'plaintext': best_pt2,
+        })
+
+    elapsed = time.time() - t0
+    print(f"\n  Total time: {elapsed:.1f}s")
+    global_top.print_results("VIG-29 + RAIL FENCE")
+    return global_top
+
+# ============================================================
+# HYPOTHESIS 5: VIGENERE-29 then SKIP / DECIMATION
+# ============================================================
+
+def decimation_decode(text, step):
+    """
+    Decode a decimation/skip cipher.
+    If the encoder read every step-th character (mod n) from plaintext,
+    we reverse that.
+    Encoder: cipher[i] = plain[(i * step) % n]
+    Decoder: plain[(i * step) % n] = cipher[i]
+    """
+    n = len(text)
+    plain = ['?'] * n
+    for i in range(n):
+        pos = (i * step) % n
+        plain[pos] = text[i]
+    return ''.join(plain)
+
+def decimation_encode_order(n, step):
+    """Get the reading order for decimation with given step."""
+    return [(i * step) % n for i in range(n)]
+
+def test_vig_then_decimation(iterations=500000):
+    """
+    Read every Nth character from Vig-29 output.
+    97 is prime, so all 1 < N < 97 are coprime to 97.
+    Test all such N. SA optimizes unknown key positions.
+    """
+    print("\n" + "#"*80)
+    print("# HYPOTHESIS 5: VIGENERE-29 then SKIP/DECIMATION")
+    print("#"*80)
+    print(f"  Testing all steps 2..96 (97 is prime, all coprime)")
+    print(f"  Iterations per step: {iterations // 95}")
+
+    global_top = TopResults(5)
+    t0 = time.time()
+
+    iters_per_step = iterations // 95
+
+    for step in range(2, 97):
+        # SA over the 5 unknown key positions
+        unknowns = get_unknowns_from_key(BEST_GUESS_KEY)
+
+        key = make_key(unknowns)
+        vig_out = vig_decrypt(K4, key)
+
+        # Interpretation 1: PT was decimated then Vig encrypted
+        # CT = Vig(decimate(PT, step), key)
+        # decimate(PT, step) = Vig^-1(CT, key) = vig_out
+        # PT = decimation_decode(vig_out, step)
+        pt1 = decimation_decode(vig_out, step)
+        score1 = qscore(pt1) + word_bonus(pt1)
+
+        best_score1 = score1
+        best_unknowns1 = unknowns[:]
+        best_pt1 = pt1
+
+        # Interpretation 2: Vig output was decimated to produce CT
+        # CT = decimate(Vig(PT, key), step)
+        # Vig(PT, key) = decimation_decode(CT, step)
+        # PT = Vig^-1(decimation_decode(CT, step), key)
+        decoded_ct = decimation_decode(K4, step)
+        pt2 = vig_decrypt(decoded_ct, key)
+        score2 = qscore(pt2) + word_bonus(pt2)
+
+        best_score2 = score2
+        best_unknowns2 = unknowns[:]
+        best_pt2 = pt2
+
+        T = 5.0
+        alpha = 1.0 - (3.0 / max(iters_per_step, 1))
+
+        unknowns1 = unknowns[:]
+        unknowns2 = unknowns[:]
+        cur1 = score1
+        cur2 = score2
+
+        for it in range(iters_per_step):
+            # Interp 1
+            nu1 = unknowns1[:]
+            pos = random.randrange(5)
+            nu1[pos] = random.randrange(26)
+            k1 = make_key(nu1)
+            vo1 = vig_decrypt(K4, k1)
+            p1 = decimation_decode(vo1, step)
+            s1 = qscore(p1) + word_bonus(p1)
+            d1 = s1 - cur1
+            if d1 > 0 or random.random() < math.exp(d1 / max(T, 0.001)):
+                unknowns1 = nu1
+                cur1 = s1
+                if s1 > best_score1:
+                    best_score1 = s1
+                    best_unknowns1 = nu1[:]
+                    best_pt1 = p1
+
+            # Interp 2
+            nu2 = unknowns2[:]
+            pos = random.randrange(5)
+            nu2[pos] = random.randrange(26)
+            k2 = make_key(nu2)
+            p2 = vig_decrypt(decoded_ct, k2)
+            s2 = qscore(p2) + word_bonus(p2)
+            d2 = s2 - cur2
+            if d2 > 0 or random.random() < math.exp(d2 / max(T, 0.001)):
+                unknowns2 = nu2
+                cur2 = s2
+                if s2 > best_score2:
+                    best_score2 = s2
+                    best_unknowns2 = nu2[:]
+                    best_pt2 = p2
+
+            T *= alpha
+
+        global_top.add(best_score1, {
+            'key': make_key(best_unknowns1),
+            'step': step,
+            'direction': 'Vig then un-decimation',
+            'plaintext': best_pt1,
+        })
+        global_top.add(best_score2, {
+            'key': make_key(best_unknowns2),
+            'step': step,
+            'direction': 'un-decimation CT then Vig',
+            'plaintext': best_pt2,
+        })
+
+    elapsed = time.time() - t0
+    print(f"  Total time: {elapsed:.1f}s")
+    global_top.print_results("VIG-29 + SKIP/DECIMATION")
+    return global_top
+
+# ============================================================
+# MAIN
+# ============================================================
+
+def print_banner():
+    print("="*80)
+    print("  K4 DOUBLE-LAYER CIPHER HYPOTHESIS TESTER")
+    print("  Testing 5 second-layer hypotheses with Simulated Annealing")
+    print("="*80)
+    print(f"  K4 ciphertext ({N} chars): {K4}")
+    print(f"  KRYPTOS alphabet: {KRYPTOS}")
+    print(f"  Partial key:      {''.join(KNOWN_KEY)}")
+    print(f"  Best-guess key:   {BEST_GUESS_KEY}")
+    print()
+
+    # Show what the best-guess key produces
+    pt = vig_decrypt(K4, BEST_GUESS_KEY)
+    print(f"  Vig decrypt with best-guess key:")
+    print(f"    {pt}")
+    score = qscore(pt)
+    wds = found_words(pt)
+    print(f"    Quadgram score: {score:.2f}")
+    print(f"    Crib words found: {wds}")
+    print()
+
+    # Highlight the cribs
+    highlight = list(pt)
+    for w in ['EASTNORTHEAST', 'BERLINCLOCK']:
+        idx = pt.find(w)
+        if idx >= 0:
+            print(f"    '{w}' at position {idx}")
+    print()
+
+def print_final_summary(all_results):
+    print("\n" + "="*80)
+    print("  GRAND SUMMARY: ALL HYPOTHESES")
+    print("="*80)
+
+    # Collect all results across hypotheses
+    grand = TopResults(20)
+    for label, top in all_results:
+        for score, info in top.results:
+            info_with_label = dict(info)
+            info_with_label['hypothesis'] = label
+            grand.add(score, info_with_label)
+
+    print(f"\n  Top 20 results across ALL hypotheses:\n")
+
+    for rank, (score, info) in enumerate(grand.results, 1):
+        highlight = " <<<< HIGH SCORE >>>>" if score > -500 else ""
+        pt = info.get('plaintext', '')
+        wds = found_words(pt)
+        hyp = info.get('hypothesis', '?')
+        print(f"  #{rank:2d}  Score={score:8.2f}  Hypothesis: {hyp}{highlight}")
+        print(f"       PT: {pt[:60]}...")
+        if wds:
+            print(f"       *** WORDS: {wds} ***")
+
+        # Print key details
+        key_info = {k: v for k, v in info.items()
+                    if k not in ('plaintext', 'hypothesis')}
+        for k, v in key_info.items():
+            print(f"       {k}: {v}")
+        print()
+
+    # Check for any high scores
+    high_scores = [(s, i) for s, i in grand.results if s > -500]
+    if high_scores:
+        print(f"\n  *** {len(high_scores)} RESULT(S) ABOVE -500 THRESHOLD ***")
+        for s, i in high_scores:
+            print(f"      Score {s:.2f}: {i.get('hypothesis', '?')}")
+    else:
+        print("\n  No results above the -500 threshold.")
+        print("  The double-layer hypothesis may not apply, or the correct")
+        print("  second layer is not among those tested.")
+
+    print("\n" + "="*80)
+    print("  ANALYSIS COMPLETE")
+    print("="*80)
 
 
 if __name__ == "__main__":
-    main()
+    random.seed(42)  # reproducible results
+    print_banner()
 
-    # Additional deep analysis
-    deep_dive_promising_keys()
-    reconstruct_with_double_layer()
-    analyze_position_correlation()
-    try_position_based_shift()
-    try_readable_word_derived_keys()
-    comprehensive_word_search()
-    try_mixed_layer_decryption()
+    SA_ITERS = 500000
 
-    # New analyses
-    try_three_letter_keys()
-    interleaved_decryption()
-    segment_pattern_analysis()
-    try_autokey_cipher()
-    analyze_running_key()
-    exhaustive_word_search_all_methods()
+    all_results = []
 
-    # Final analyses
-    analyze_visible_word_boundaries()
-    try_different_key_at_each_position()
-    try_modifying_key_at_gibberish_positions()
-    analyze_original_k4_at_readable()
-    summary_and_conclusions()
+    # Hypothesis 1: Vig + Simple Substitution
+    top1 = test_vig_then_substitution(iterations=SA_ITERS)
+    all_results.append(("Vig-29 + Simple Substitution", top1))
+
+    # Hypothesis 2: Vig + Columnar Transposition
+    top2 = test_vig_then_columnar(iterations=SA_ITERS)
+    all_results.append(("Vig-29 + Columnar Transposition", top2))
+
+    # Hypothesis 3: Vig + Route Cipher
+    top3 = test_vig_then_route(iterations=SA_ITERS)
+    all_results.append(("Vig-29 + Route Cipher", top3))
+
+    # Hypothesis 4: Vig + Rail Fence
+    top4 = test_vig_then_railfence(iterations=SA_ITERS)
+    all_results.append(("Vig-29 + Rail Fence", top4))
+
+    # Hypothesis 5: Vig + Skip/Decimation
+    top5 = test_vig_then_decimation(iterations=SA_ITERS)
+    all_results.append(("Vig-29 + Skip/Decimation", top5))
+
+    # Final summary
+    print_final_summary(all_results)
